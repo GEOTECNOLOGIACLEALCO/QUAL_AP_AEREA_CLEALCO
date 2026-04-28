@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "15_11778_18392",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "FAZENDA": 303394, "TALHAO": 1 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -50.595586694744817, -21.534847002048789 ], [ -50.592041015625, -21.534847002048789 ], [ -50.592041015625, -21.536227300980606 ], [ -50.595586694744817, -21.534847002048789 ] ] ] } }
+]
+}

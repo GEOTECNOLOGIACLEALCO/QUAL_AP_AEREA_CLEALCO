@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "15_11806_18459",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "label": "Ãtimo" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -50.29541015625, -22.228090416784486 ], [ -50.29541015625, -22.217920166311014 ], [ -50.284423828125, -22.217920166311014 ], [ -50.284423828125, -22.228090416784486 ], [ -50.29541015625, -22.228090416784486 ] ] ] } }
+]
+}

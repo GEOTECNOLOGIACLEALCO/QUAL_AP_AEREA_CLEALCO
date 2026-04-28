@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sinal RTK Clealco 2026</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
+    <style>
+        body { margin:0; } #map { width: 100vw; height: 100vh; }
+        .legend { background: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var map = L.map('map').setView([-21.2, -50.4], 12);
+    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {attr: 'Google'}).addTo(map);
+
+    // Função para carregar os arquivos z_x_y.json
+    function getFlatTileUrl(layerName) {
+        return function(data) {
+            return layerName + '/' + data.z + '_' + data.x + '_' + data.y + '.json';
+        }
+    }
+
+    // Talhões
+    var lyrTalhoes = L.vectorGrid.slicer('tiles_talhoes/{z}_{x}_{y}.json', {
+        maxZoom: 16, indexMaxZoom: 13, interactive: true,
+        urlFunction: function(z, x, y) { return 'tiles_talhoes/' + z + '_' + x + '_' + y + '.json'; },
+        vectorTileLayerStyles: { sliced: { color: 'black', weight: 1, fill: false } }
+    }).addTo(map);
+
+    lyrTalhoes.on('click', function(e) {
+        L.popup().setLatLng(e.latlng).setContent("Fazenda: " + e.layer.properties.FAZENDA + "<br>Talhão: " + e.layer.properties.TALHAO).openOn(map);
+    });
+
+    // Sinal
+    var lyrSinal = L.vectorGrid.slicer('tiles_sinal/{z}_{x}_{y}.json', {
+        maxZoom: 16, indexMaxZoom: 13, interactive: true,
+        urlFunction: function(z, x, y) { return 'tiles_sinal/' + z + '_' + x + '_' + y + '.json'; },
+        vectorTileLayerStyles: {
+            sliced: function(prop) {
+                var c = prop.label === 'Ótimo' ? 'green' : prop.label === 'Regular' ? 'yellow' : 'red';
+                return { fillColor: c, fillOpacity: 0.5, color: 'black', weight: 0.2 };
+            }
+        }
+    }).addTo(map);
+
+    // Torres
+    fetch('torres.json').then(res => res.json()).then(data => {
+        data.forEach(t => {
+            L.circleMarker([t.lat, t.lon], {radius: 5, color: 'blue', fillOpacity: 1}).addTo(map)
+             .bindTooltip(t.n, {permanent: true, direction: 'top'});
+        });
+    });
+
+    // Legenda simples
+    var legend = L.control({position: 'bottomleft'});
+    legend.onAdd = function() {
+        var div = L.DomUtil.create('div', 'legend');
+        div.innerHTML = '<b>Sinal RTK</b><br><i style="background:green">🟢</i> Ótimo<br><i style="background:yellow">🟡</i> Regular<br><i style="background:red">🔴</i> Ruim';
+        return div;
+    };
+    legend.addTo(map);
+
+</script>
+</body>
+</html>
