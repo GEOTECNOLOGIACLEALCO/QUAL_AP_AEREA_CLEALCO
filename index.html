@@ -1,69 +1,143 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>Sinal RTK Clealco 2026</title>
+    <title>Clealco RTK Master</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
     <style>
-        body { margin:0; } #map { width: 100vw; height: 100vh; }
-        .legend { background: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f4f4; }
+        #map { width: 100vw; height: 100vh; }
+        
+        /* Painel do Filtro */
+        .filter-panel {
+            position: absolute; top: 15px; left: 60px; z-index: 1000;
+            background: white; padding: 15px; border: 2px solid #333;
+            border-radius: 4px; width: 250px;
+        }
+        .filter-panel b { text-decoration: underline; display: block; margin-bottom: 5px; }
+        select { width: 100%; padding: 8px; font-weight: bold; cursor: pointer; }
+
+        /* LEGENDA UNIFICADA - IGUAL À FOTO */
+        .legend {
+            background: #C0C0C0; /* Cinza claro/médio */
+            padding: 10px; border: 1px solid #000;
+            line-height: 22px; font-family: Arial, sans-serif;
+            color: #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+        .legend u { font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block; }
+        .legend i { 
+            width: 22px; height: 22px; float: left; 
+            margin-right: 10px; border: 1px solid #000; 
+        }
+
+        .label-torre {
+            background: transparent; border: none; box-shadow: none;
+            color: black; font-weight: bold; font-size: 12px;
+            text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff;
+        }
     </style>
 </head>
 <body>
-<div id="map"></div>
-<script>
-    var map = L.map('map').setView([-21.2, -50.4], 12);
-    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {attr: 'Google'}).addTo(map);
 
-    // Função para carregar os arquivos z_x_y.json
-    function getFlatTileUrl(layerName) {
-        return function(data) {
-            return layerName + '/' + data.z + '_' + data.x + '_' + data.y + '.json';
+<div class="filter-panel">
+    <b>FAZENDA</b>
+    <select id="select-fazenda" onchange="executarFiltro()">
+        <option value="">-- SELECIONE --</option>
+    </select>
+</div>
+
+<div id="map"></div>
+
+<script src="data_talhoes.js"></script>
+<script src="data_sinal_1.js"></script>
+<script src="data_sinal_2.js"></script>
+<script src="data_raio.js"></script>
+<script src="data_torres.js"></script>
+<script src="fazendas.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // Inicialização focada na região
+    var map = L.map('map').setView([-21.2, -50.4], 12);
+    
+    var hibrido = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {attr: 'Google'}).addTo(map);
+
+    // Função de Estilo com as cores que VOCÊ mandou
+    function getStyleSinal(feature) {
+        var status = feature.properties.label;
+        var cor = "#808080"; // Default cinza
+        if (status === 'Ótimo') cor = "#00FF00";   // Verde vibrante
+        if (status === 'Regular') cor = "#FFFF00"; // Amarelo
+        if (status === 'Ruim') cor = "#FF0000";    // Vermelho
+        return { color: "black", weight: 0.3, fillColor: cor, fillOpacity: 0.8 };
+    }
+
+    // Camadas
+    var lyrTalhoes = L.geoJSON(data_talhoes, { style: { color: "black", weight: 1, fillOpacity: 0 } }).addTo(map);
+    var lyrSinal = L.featureGroup([
+        L.geoJSON(data_sinal_1, { style: getStyleSinal }),
+        L.geoJSON(data_sinal_2, { style: getStyleSinal })
+    ]).addTo(map);
+    var lyrRaio = L.geoJSON(data_raio, { style: { color: "black", weight: 1.5, dashArray: "5, 5", fillOpacity: 0 } }).addTo(map);
+    
+    var lyrTorres = L.geoJSON(data_torres, {
+        pointToLayer: function(f, latlng) {
+            var m = L.circleMarker(latlng, { radius: 6, color: 'blue', fillColor: 'white', fillOpacity: 1, weight: 2 });
+            m.bindTooltip(f.properties["Nome da to"] || "S/N", { permanent: true, direction: 'top', className: 'label-torre' });
+            return m;
+        }
+    }).addTo(map);
+
+    // FILTRO DE FAZENDA (Reescrito do zero)
+    var combo = document.getElementById("select-fazenda");
+    lista_fazendas.forEach(f => {
+        let opt = document.createElement("option");
+        opt.value = f; opt.textContent = f;
+        combo.appendChild(opt);
+    });
+
+    function executarFiltro() {
+        var faz = combo.value;
+        if (!faz) return;
+
+        var bounds = L.latLngBounds([]);
+        var achei = false;
+
+        // Vasculha o dado bruto para não ter erro de camada não carregada
+        data_talhoes.features.forEach(function(f) {
+            if (f.properties.FAZENDA === faz) {
+                var layer = L.geoJSON(f);
+                bounds.extend(layer.getBounds());
+                achei = true;
+            }
+        });
+
+        if (achei) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+        } else {
+            alert("Fazenda não localizada nos dados.");
         }
     }
 
-    // Talhões
-    var lyrTalhoes = L.vectorGrid.slicer('tiles_talhoes/{z}_{x}_{y}.json', {
-        maxZoom: 16, indexMaxZoom: 13, interactive: true,
-        urlFunction: function(z, x, y) { return 'tiles_talhoes/' + z + '_' + x + '_' + y + '.json'; },
-        vectorTileLayerStyles: { sliced: { color: 'black', weight: 1, fill: false } }
-    }).addTo(map);
-
-    lyrTalhoes.on('click', function(e) {
-        L.popup().setLatLng(e.latlng).setContent("Fazenda: " + e.layer.properties.FAZENDA + "<br>Talhão: " + e.layer.properties.TALHAO).openOn(map);
-    });
-
-    // Sinal
-    var lyrSinal = L.vectorGrid.slicer('tiles_sinal/{z}_{x}_{y}.json', {
-        maxZoom: 16, indexMaxZoom: 13, interactive: true,
-        urlFunction: function(z, x, y) { return 'tiles_sinal/' + z + '_' + x + '_' + y + '.json'; },
-        vectorTileLayerStyles: {
-            sliced: function(prop) {
-                var c = prop.label === 'Ótimo' ? 'green' : prop.label === 'Regular' ? 'yellow' : 'red';
-                return { fillColor: c, fillOpacity: 0.5, color: 'black', weight: 0.2 };
-            }
-        }
-    }).addTo(map);
-
-    // Torres
-    fetch('torres.json').then(res => res.json()).then(data => {
-        data.forEach(t => {
-            L.circleMarker([t.lat, t.lon], {radius: 5, color: 'blue', fillOpacity: 1}).addTo(map)
-             .bindTooltip(t.n, {permanent: true, direction: 'top'});
-        });
-    });
-
-    // Legenda simples
-    var legend = L.control({position: 'bottomleft'});
+    // LEGENDA UNIFICADA (IGUAL À IMAGEM)
+    var legend = L.control({position: 'bottomright'});
     legend.onAdd = function() {
         var div = L.DomUtil.create('div', 'legend');
-        div.innerHTML = '<b>Sinal RTK</b><br><i style="background:green">🟢</i> Ótimo<br><i style="background:yellow">🟡</i> Regular<br><i style="background:red">🔴</i> Ruim';
+        div.innerHTML = '<u><b>SINAL RTK</b></u>' +
+                        '<i style="background:#00FF00"></i> Ótimo<br>' +
+                        '<i style="background:#FFFF00"></i> Regular<br>' +
+                        '<i style="background:#FF0000"></i> Ruim';
         return div;
     };
     legend.addTo(map);
+
+    // Controle de Camadas
+    L.control.layers(null, {
+        "Talhões (Borda)": lyrTalhoes,
+        "Sinal RTK": lyrSinal,
+        "Raio Cobertura": lyrRaio,
+        "Torres": lyrTorres
+    }, {collapsed: false}).addTo(map);
 
 </script>
 </body>
