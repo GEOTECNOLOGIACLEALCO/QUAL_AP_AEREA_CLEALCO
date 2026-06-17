@@ -9,34 +9,42 @@
         :root { --primary: #333; --bg: #eef2f5; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); overflow: hidden; }
         
+        /* TELA DE LOGIN ESTADO DA ARTE */
+        #login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #2c3e50; z-index: 99999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .login-box { background: white; padding: 30px 20px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 280px; text-align: center; }
+        .login-logo { max-width: 180px; max-height: 80px; margin-bottom: 20px; object-fit: contain; }
+        .login-box h2 { margin: 0 0 20px 0; font-size: 16px; color: #444; text-transform: uppercase; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        .login-box button { width: 100%; padding: 12px; background: #006400; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.3s; }
+        .login-box button:hover { background: #004d00; }
+        .login-box .erro-msg { color: red; font-size: 12px; display: none; margin-bottom: 10px; font-weight: bold; }
+        .login-footer { margin-top: 25px; font-size: 10px; color: #888; font-family: 'Courier New', Courier, monospace; letter-spacing: 0.5px; }
+        
+        /* O conteúdo do App fica escondido até o login passar */
+        #app-content { display: none; height: 100%; width: 100%; }
+        
         /* Cabeçalho e Filtros BI */
         .header { position: absolute; top: 0; left: 0; right: 0; background: white; padding: 10px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; gap: 8px; }
         .filtro-grupo { flex: 1; min-width: 80px; display: flex; flex-direction: column; }
         .filtro-grupo label { font-size: 10px; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 2px; }
         select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; color: #333; background: #f9f9f9; }
         
-        /* Views - O SEGREDO DO SUCESSO AQUI: top alterado para 145px para não engolir o layout */
+        /* Views */
         .view { position: absolute; top: 145px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
         .view.active { display: block; }
         #mapa { height: 100%; width: 100%; }
         
-        /* Layout Indicadores Estilo Safadamente Idêntico */
+        /* Layout Indicadores */
         .indicadores-container { padding: 15px; }
-        
         .bi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
         @media (min-width: 600px) { .bi-grid { grid-template-columns: repeat(4, 1fr); } }
-        
         .bi-item { background: white; padding: 15px 5px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
         .bi-titulo { font-size: 12px; font-weight: bold; color: #555; text-transform: uppercase; text-align: center; min-height: 28px; line-height: 1.2; margin-bottom: 10px; }
-        
-        /* Gráficos Maiores (Aumentado de 90px para 120px) */
         .chart-container { position: relative; height: 120px; width: 120px; margin: 0 auto; }
-        
         .bi-valor { font-size: 15px; font-weight: bold; color: #222; margin-top: 12px; background: #f4f4f4; padding: 4px 10px; border-radius: 4px; }
-        
         .bi-resumo { background: white; padding: 12px; text-align: center; border-radius: 8px; font-size: 14px; color: #444; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #333; }
         
-        /* Tabela de Fazendas */
+        /* Tabela */
         .tabela-container { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th { background: #f0f0f0; padding: 10px; text-align: left; color: #444; }
@@ -60,96 +68,134 @@
 </head>
 <body>
 
-    <div class="header">
-        <div class="filtro-grupo">
-            <label>Ano</label>
-            <select id="f-ano" onchange="atualizarFiltrosCascata('ano')"><option value="TODOS">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-            <label>Mês</label>
-            <select id="f-mes" onchange="atualizarFiltrosCascata('mes')"><option value="TODOS">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-            <label>Data</label>
-            <select id="f-data" onchange="atualizarFiltrosCascata('data')"><option value="TODOS">Todas</option></select>
-        </div>
-        <div class="filtro-grupo" style="flex: 100%; margin-top: 5px;">
-            <label>Seleção de Área</label>
-            <select id="f-area" onchange="renderizarPainel()"><option value="TUDO">VER TUDO (Consolidado)</option></select>
+    <div id="login-overlay">
+        <div class="login-box">
+            <img src="./logo.png" alt="Logo Usina" class="login-logo" onerror="this.src='https://via.placeholder.com/150x60?text=LOGO+AQUI'">
+            <h2>Acesso Restrito</h2>
+            <div id="erro-login" class="erro-msg">Usuário ou senha incorretos!</div>
+            <input type="text" id="ipt-user" placeholder="Usuário">
+            <input type="password" id="ipt-pass" placeholder="Senha">
+            <button onclick="tentarLogin()">ENTRAR</button>
+            <div class="login-footer">Desenvolvido por Geotecnologias</div>
         </div>
     </div>
 
-    <div id="view-mapa" class="view active">
-        <div id="mapa"></div>
-        <div class="legenda-mapa">
-            <div class="legenda-item"><input type="checkbox" id="chk-aplicado" checked onchange="toggleCamada('APLICADO')"><span class="legenda-cor" style="background:#006400;"></span> APLICADO</div>
-            <div class="legenda-item"><input type="checkbox" id="chk-sobreposicao" checked onchange="toggleCamada('SOBREPOSIÇÃO')"><span class="legenda-cor" style="background:#00008B;"></span> SOBREPOSIÇÃO</div>
-            <div class="legenda-item"><input type="checkbox" id="chk-falha" checked onchange="toggleCamada('NÃO APLICADO DENTRO DO TALHÃO')"><span class="legenda-cor" style="background:#FFFF00;"></span> NÃO APLICADO</div>
-            <div class="legenda-item"><input type="checkbox" id="chk-excedente" checked onchange="toggleCamada('APLICADO FORA DO TALHÃO')"><span class="legenda-cor" style="background:#FF0000;"></span> APLIC. FORA</div>
-            <div class="legenda-item" style="border-top:1px solid #ccc; padding-top:4px;"><input type="checkbox" id="chk-talhao" checked onchange="toggleCamada('TALHAO')"><span class="legenda-cor" style="background:transparent; border:1px dashed #000;"></span> LIMITES TALHÃO</div>
+    <div id="app-content">
+        <div class="header">
+            <div class="filtro-grupo">
+                <label>Ano</label>
+                <select id="f-ano" onchange="atualizarFiltrosCascata('ano')"><option value="TODOS">Todos</option></select>
+            </div>
+            <div class="filtro-grupo">
+                <label>Mês</label>
+                <select id="f-mes" onchange="atualizarFiltrosCascata('mes')"><option value="TODOS">Todos</option></select>
+            </div>
+            <div class="filtro-grupo">
+                <label>Data</label>
+                <select id="f-data" onchange="atualizarFiltrosCascata('data')"><option value="TODOS">Todas</option></select>
+            </div>
+            <div class="filtro-grupo" style="flex: 100%; margin-top: 5px;">
+                <label>Seleção de Área</label>
+                <select id="f-area" onchange="renderizarPainel()"><option value="TUDO">VER TUDO (Consolidado)</option></select>
+            </div>
         </div>
-    </div>
 
-    <div id="view-indicators" class="view">
-        <div class="indicadores-container">
-            
-            <div class="bi-grid">
-                <div class="bi-item" style="border-bottom: 4px solid #006400;">
-                    <div class="bi-titulo">Aplicado Interno</div>
-                    <div class="chart-container"><canvas id="graf-acerto"></canvas></div>
-                    <div class="bi-valor"><span id="val-acerto">0.00</span> ha</div>
-                </div>
-                <div class="bi-item" style="border-bottom: 4px solid #00008B;">
-                    <div class="bi-titulo">Sobreposição</div>
-                    <div class="chart-container"><canvas id="graf-sobreposicao"></canvas></div>
-                    <div class="bi-valor"><span id="val-sobreposicao">0.00</span> ha</div>
-                </div>
-                <div class="bi-item" style="border-bottom: 4px solid #FFFF00;">
-                    <div class="bi-titulo">Não Aplicado</div>
-                    <div class="chart-container"><canvas id="graf-falha"></canvas></div>
-                    <div class="bi-valor"><span id="val-falha">0.00</span> ha</div>
-                </div>
-                <div class="bi-item" style="border-bottom: 4px solid #FF0000;">
-                    <div class="bi-titulo">Excedente</div>
-                    <div class="chart-container"><canvas id="graf-excedente"></canvas></div>
-                    <div class="bi-valor"><span id="val-excedente">0.00</span> ha</div>
-                </div>
+        <div id="view-mapa" class="view active">
+            <div id="mapa"></div>
+            <div class="legenda-mapa">
+                <div class="legenda-item"><input type="checkbox" id="chk-aplicado" checked onchange="toggleCamada('APLICADO')"><span class="legenda-cor" style="background:#006400;"></span> APLICADO</div>
+                <div class="legenda-item"><input type="checkbox" id="chk-sobreposicao" checked onchange="toggleCamada('SOBREPOSIÇÃO')"><span class="legenda-cor" style="background:#00008B;"></span> SOBREPOSIÇÃO</div>
+                <div class="legenda-item"><input type="checkbox" id="chk-falha" checked onchange="toggleCamada('NÃO APLICADO DENTRO DO TALHÃO')"><span class="legenda-cor" style="background:#FFFF00;"></span> NÃO APLICADO</div>
+                <div class="legenda-item"><input type="checkbox" id="chk-excedente" checked onchange="toggleCamada('APLICADO FORA DO TALHÃO')"><span class="legenda-cor" style="background:#FF0000;"></span> APLIC. FORA</div>
+                <div class="legenda-item" style="border-top:1px solid #ccc; padding-top:4px;"><input type="checkbox" id="chk-talhao" checked onchange="toggleCamada('TALHAO')"><span class="legenda-cor" style="background:transparent; border:1px dashed #000;"></span> LIMITES TALHÃO</div>
             </div>
-
-            <div class="bi-resumo">
-                Área de Referência Total (Talhão): <b id="val-total" style="font-size: 16px;">0.00</b> ha
-            </div>
-
-            <div class="tabela-container">
-                <table>
-                    <thead><tr><th>Fazenda</th><th>Data Voo</th><th>Processamento</th></tr></thead>
-                    <tbody id="tabela-corpo"></tbody>
-                </table>
-            </div>
-
-            <div class="footer-texto" id="rodape-data">Ultima atualização em: --</div>
         </div>
-    </div>
 
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchView('mapa')">🗺️ MAPA</div>
-        <div class="nav-item" onclick="switchView('indicators')">📊 BI & DADOS</div>
+        <div id="view-indicators" class="view">
+            <div class="indicadores-container">
+                <div class="bi-grid">
+                    <div class="bi-item" style="border-bottom: 4px solid #006400;">
+                        <div class="bi-titulo">Aplicado Interno</div>
+                        <div class="chart-container"><canvas id="graf-acerto"></canvas></div>
+                        <div class="bi-valor"><span id="val-acerto">0.00</span> ha</div>
+                    </div>
+                    <div class="bi-item" style="border-bottom: 4px solid #00008B;">
+                        <div class="bi-titulo">Sobreposição</div>
+                        <div class="chart-container"><canvas id="graf-sobreposicao"></canvas></div>
+                        <div class="bi-valor"><span id="val-sobreposicao">0.00</span> ha</div>
+                    </div>
+                    <div class="bi-item" style="border-bottom: 4px solid #FFFF00;">
+                        <div class="bi-titulo">Não Aplicado</div>
+                        <div class="chart-container"><canvas id="graf-falha"></canvas></div>
+                        <div class="bi-valor"><span id="val-falha">0.00</span> ha</div>
+                    </div>
+                    <div class="bi-item" style="border-bottom: 4px solid #FF0000;">
+                        <div class="bi-titulo">Excedente</div>
+                        <div class="chart-container"><canvas id="graf-excedente"></canvas></div>
+                        <div class="bi-valor"><span id="val-excedente">0.00</span> ha</div>
+                    </div>
+                </div>
+
+                <div class="bi-resumo">
+                    Área de Referência Total (Talhão): <b id="val-total" style="font-size: 16px;">0.00</b> ha
+                </div>
+
+                <div class="tabela-container">
+                    <table>
+                        <thead><tr><th>Fazenda</th><th>Data Voo</th><th>Processamento</th></tr></thead>
+                        <tbody id="tabela-corpo"></tbody>
+                    </table>
+                </div>
+
+                <div class="footer-texto" id="rodape-data">Ultima atualização em: --</div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="switchView('mapa')">🗺️ MAPA</div>
+            <div class="nav-item" onclick="switchView('indicators')">📊 BI & DADOS</div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // --- SISTEMA DE LOGIN DE ALTÍSSIMA SEGURANÇA (Favor não rir) ---
+        function tentarLogin() {
+            const u = document.getElementById('ipt-user').value.toLowerCase();
+            const p = document.getElementById('ipt-pass').value;
+            
+            // Dicionário de senhas indecifráveis
+            const credenciais = {
+                'admin': 'admin',
+                'gerente': '123456',
+                'visitante': '1234',
+                'usina': 'senha123'
+            };
+
+            if (credenciais[u] && credenciais[u] === p) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                // Inicia o mapa só depois que a div estiver visível, senão o Leaflet quebra o tamanho
+                setTimeout(() => { map.invalidateSize(); }, 200);
+            } else {
+                document.getElementById('erro-login').style.display = 'block';
+            }
+        }
+        // Permite logar apertando ENTER
+        document.getElementById('ipt-pass').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') tentarLogin();
+        });
+
+        // --- RESTO DO CÓDIGO DO APP ---
         let map;
         let dadosCSV = [];
         let geojsonFeatures = [];
         let graficos = {};
 
         const mapaCores = {
-            "APLICADO": "#006400", 
-            "SOBREPOSIÇÃO": "#00008B", 
-            "NÃO APLICADO DENTRO DO TALHÃO": "#FFFF00", 
-            "APLICADO FORA DO TALHÃO": "#FF0000"
+            "APLICADO": "#006400", "SOBREPOSIÇÃO": "#00008B", "NÃO APLICADO DENTRO DO TALHÃO": "#FFFF00", "APLICADO FORA DO TALHÃO": "#FF0000"
         };
 
         let gruposCamadas = {
@@ -163,18 +209,12 @@
                 if (chart.config.type !== 'doughnut') return;
                 let width = chart.width, height = chart.height, ctx = chart.ctx;
                 ctx.restore();
-                
-                // Ajuste proporcional da fonte para o novo tamanho de 120px
                 let fontSize = (height / 100).toFixed(2);
                 ctx.font = "bold " + fontSize + "em 'Segoe UI', sans-serif";
                 ctx.textBaseline = "middle";
                 ctx.fillStyle = "#333";
-                
                 let val = chart.data.datasets[0].data[0] || 0;
-                let text = val.toFixed(1) + "%",
-                    textX = Math.round((width - ctx.measureText(text).width) / 2),
-                    textY = height / 2;
-                
+                let text = val.toFixed(1) + "%", textX = Math.round((width - ctx.measureText(text).width) / 2), textY = height / 2;
                 ctx.fillText(text, textX, textY);
                 ctx.save();
             }
@@ -197,11 +237,7 @@
         }
 
         function initGraficos() {
-            const configPie = (cor) => ({
-                type: 'doughnut',
-                data: { datasets: [{ data: [0, 100], backgroundColor: [cor, '#e0e0e0'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', animation: false, plugins: { tooltip: { enabled: false } } }
-            });
+            const configPie = (cor) => ({ type: 'doughnut', data: { datasets: [{ data: [0, 100], backgroundColor: [cor, '#e0e0e0'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%', animation: false, plugins: { tooltip: { enabled: false } } } });
             graficos.acerto = new Chart(document.getElementById('graf-acerto'), configPie('#006400'));
             graficos.sobreposicao = new Chart(document.getElementById('graf-sobreposicao'), configPie('#00008B'));
             graficos.falha = new Chart(document.getElementById('graf-falha'), configPie('#FFFF00'));
@@ -223,10 +259,7 @@
                             c.data.forEach(item => {
                                 if(item.FAZENDA_COD) {
                                     item._id = id;
-                                    if(item.DATA_INICIO) {
-                                        let p = item.DATA_INICIO.split('-');
-                                        if(p.length === 3) { item._ano = p[2]; item._mes = p[1]; item._dia = p[0]; }
-                                    }
+                                    if(item.DATA_INICIO) { let p = item.DATA_INICIO.split('-'); if(p.length === 3) { item._ano = p[2]; item._mes = p[1]; item._dia = p[0]; } }
                                     dadosCSV.push(item);
                                 }
                             }); res();
@@ -237,65 +270,40 @@
             });
         }
 
-        function getFiltrosAtuais() {
-            return { ano: document.getElementById('f-ano').value, mes: document.getElementById('f-mes').value, data: document.getElementById('f-data').value };
-        }
+        function getFiltrosAtuais() { return { ano: document.getElementById('f-ano').value, mes: document.getElementById('f-mes').value, data: document.getElementById('f-data').value }; }
 
         function atualizarFiltrosCascata(origem) {
-            let fa = getFiltrosAtuais();
-            let ds = dadosCSV;
-
-            if(origem === 'init') {
-                let anos = [...new Set(ds.map(d => d._ano))].filter(Boolean).sort();
-                popSelect('f-ano', anos, 'Todos');
-            }
-            fa = getFiltrosAtuais();
-            if(fa.ano !== 'TODOS') ds = ds.filter(d => d._ano === fa.ano);
-            
-            if(origem === 'init' || origem === 'ano') {
-                let meses = [...new Set(ds.map(d => d._mes))].filter(Boolean).sort();
-                popSelect('f-mes', meses, 'Todos');
-            }
-            fa = getFiltrosAtuais();
-            if(fa.mes !== 'TODOS') ds = ds.filter(d => d._mes === fa.mes);
-
-            if(origem === 'init' || origem === 'ano' || origem === 'mes') {
-                let datas = [...new Set(ds.map(d => d.DATA_INICIO))].filter(Boolean).sort();
-                popSelect('f-data', datas, 'Todas');
-            }
-            fa = getFiltrosAtuais();
-            if(fa.data !== 'TODOS') ds = ds.filter(d => d.DATA_INICIO === fa.data);
+            let fa = getFiltrosAtuais(), ds = dadosCSV;
+            if(origem === 'init') { let anos = [...new Set(ds.map(d => d._ano))].filter(Boolean).sort(); popSelect('f-ano', anos, 'Todos'); }
+            fa = getFiltrosAtuais(); if(fa.ano !== 'TODOS') ds = ds.filter(d => d._ano === fa.ano);
+            if(origem === 'init' || origem === 'ano') { let meses = [...new Set(ds.map(d => d._mes))].filter(Boolean).sort(); popSelect('f-mes', meses, 'Todos'); }
+            fa = getFiltrosAtuais(); if(fa.mes !== 'TODOS') ds = ds.filter(d => d._mes === fa.mes);
+            if(origem === 'init' || origem === 'ano' || origem === 'mes') { let datas = [...new Set(ds.map(d => d.DATA_INICIO))].filter(Boolean).sort(); popSelect('f-data', datas, 'Todas'); }
+            fa = getFiltrosAtuais(); if(fa.data !== 'TODOS') ds = ds.filter(d => d.DATA_INICIO === fa.data);
 
             let comboArea = document.getElementById('f-area');
             comboArea.innerHTML = '<option value="TUDO">VER TUDO (Consolidado)</option>';
             ds.forEach(r => comboArea.add(new Option(`${r.FAZENDA_COD} - ${r.FAZENDA_NOME} (${r.DATA_INICIO})`, r._id)));
-
             renderizarPainel();
         }
 
         function popSelect(id, array, textTudo) {
-            let sel = document.getElementById(id);
-            let valAtual = sel.value;
+            let sel = document.getElementById(id), valAtual = sel.value;
             sel.innerHTML = `<option value="TODOS">${textTudo}</option>`;
             array.forEach(i => sel.add(new Option(i, i)));
             if(array.includes(valAtual)) sel.value = valAtual;
         }
 
         function renderizarPainel() {
-            let idAlvo = document.getElementById('f-area').value;
-            let fa = getFiltrosAtuais();
-            
+            let idAlvo = document.getElementById('f-area').value, fa = getFiltrosAtuais();
             let dadosFiltrados = dadosCSV.filter(d => {
-                let matchTempo = (fa.ano === 'TODOS' || d._ano === fa.ano) && (fa.mes === 'TODOS' || d._mes === fa.mes) && (fa.data === 'TODOS' || d.DATA_INICIO === fa.data);
-                let matchId = (idAlvo === 'TUDO' || d._id === idAlvo);
-                return matchTempo && matchId;
+                return (fa.ano === 'TODOS' || d._ano === fa.ano) && (fa.mes === 'TODOS' || d._mes === fa.mes) && (fa.data === 'TODOS' || d.DATA_INICIO === fa.data) && (idAlvo === 'TUDO' || d._id === idAlvo);
             });
 
             let sums = { a:0, s:0, f:0, e:0, t:0 };
             dadosFiltrados.forEach(r => {
                 sums.a += parseFloat(r.AREA_APLICADA_INTERNA_HA)||0; sums.s += parseFloat(r.AREA_SOBREPOSTA_HA)||0;
-                sums.f += parseFloat(r.AREA_NAO_APLICADA_HA)||0; sums.e += parseFloat(r.AREA_FORA_TALHAO_HA)||0;
-                sums.t += parseFloat(r.AREA_REF_TOTAL_HA)||0;
+                sums.f += parseFloat(r.AREA_NAO_APLICADA_HA)||0; sums.e += parseFloat(r.AREA_FORA_TALHAO_HA)||0; sums.t += parseFloat(r.AREA_REF_TOTAL_HA)||0;
             });
 
             document.getElementById('val-acerto').innerText = sums.a.toFixed(2);
@@ -305,19 +313,14 @@
             document.getElementById('val-total').innerText = sums.t.toFixed(2);
 
             let areaReferenciaTotal = sums.t > 0 ? sums.t : 1; 
-
-            let pctA = (sums.a / areaReferenciaTotal) * 100;
-            let pctS = (sums.s / areaReferenciaTotal) * 100;
-            let pctF = (sums.f / areaReferenciaTotal) * 100;
-            let pctE = (sums.e / areaReferenciaTotal) * 100; 
+            let pctA = (sums.a / areaReferenciaTotal) * 100, pctS = (sums.s / areaReferenciaTotal) * 100, pctF = (sums.f / areaReferenciaTotal) * 100, pctE = (sums.e / areaReferenciaTotal) * 100; 
 
             graficos.acerto.data.datasets[0].data = [pctA, 100 - pctA > 0 ? 100 - pctA : 0]; graficos.acerto.update();
             graficos.sobreposicao.data.datasets[0].data = [pctS, 100 - pctS > 0 ? 100 - pctS : 0]; graficos.sobreposicao.update();
             graficos.falha.data.datasets[0].data = [pctF, 100 - pctF > 0 ? 100 - pctF : 0]; graficos.falha.update();
             graficos.excedente.data.datasets[0].data = [pctE, 100 - pctE > 0 ? 100 - pctE : 0]; graficos.excedente.update();
 
-            let htmlTab = '';
-            let ultimaDataProc = '--';
+            let htmlTab = '', ultimaDataProc = '--';
             dadosFiltrados.forEach(r => {
                 htmlTab += `<tr><td>${r.FAZENDA_NOME}</td><td>${r.DATA_INICIO}</td><td>${r.DATA_PROCESSAMENTO || '--'}</td></tr>`;
                 if(r.DATA_PROCESSAMENTO) ultimaDataProc = r.DATA_PROCESSAMENTO;
@@ -327,15 +330,13 @@
 
             Object.values(gruposCamadas).forEach(g => g.clearLayers());
             let boundsGeral = L.featureGroup();
-            
             let idsParaPlotar = idAlvo === 'TUDO' ? dadosFiltrados.map(d => d._id) : [idAlvo];
             
             geojsonFeatures.filter(g => idsParaPlotar.includes(g.id)).forEach(pacote => {
                 L.geoJSON(pacote.dados, {
                     style: f => {
                         if (f.properties.TIPO_GEO === "TALHAO") return { color: "#000", weight: 2, fillOpacity: 0 };
-                        let cor = mapaCores[f.properties.CLASSE] || "#999";
-                        return { color: cor, weight: 1, fillColor: cor, fillOpacity: 1.0 }; 
+                        let cor = mapaCores[f.properties.CLASSE] || "#999"; return { color: cor, weight: 1, fillColor: cor, fillOpacity: 1.0 }; 
                     },
                     onEachFeature: (f, layer) => {
                         let tipo = f.properties.TIPO_GEO;
