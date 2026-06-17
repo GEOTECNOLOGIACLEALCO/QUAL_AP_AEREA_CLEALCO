@@ -3,130 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BI Qualidade Aérea</title>
+    <title>Painel BI - Aplicação Aérea</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #f0f2f5; --card-bg: #ffffff; --text: #333; }
+        :root { --primary: #2e7d32; --bg: #e9ecef; --text: #333; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
         
-        /* Cabeçalho e Filtros estilo BI */
-        .header { position: absolute; top: 0; left: 0; right: 0; background: var(--card-bg); padding: 10px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; gap: 8px; flex-wrap: wrap; }
-        .filtro-box { flex: 1; min-width: 100px; }
-        .filtro-box label { font-size: 11px; font-weight: bold; color: #777; text-transform: uppercase; margin-bottom: 2px; display: block; }
-        select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd; font-size: 13px; font-weight: 600; color: #222; background: #fdfdfd; }
+        /* Filtros BI */
+        .header { position: absolute; top: 0; left: 0; right: 0; background: white; padding: 10px; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .header select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; background: #f8f9fa; }
+        .header select.full-width { grid-column: span 2; }
         
-        /* Telas */
-        .view { position: absolute; top: 75px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; padding: 10px; }
+        /* Views */
+        .view { position: absolute; top: 100px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
         .view.active { display: block; }
-        #mapa { height: 100%; width: 100%; border-radius: 8px; }
+        #mapa { height: 100%; width: 100%; }
         
-        /* Grid do BI */
-        .bi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .bi-card { background: var(--card-bg); border-radius: 8px; padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; }
-        .bi-card h4 { margin: 0 0 5px 0; font-size: 12px; color: #666; }
-        .bi-valor { font-size: 18px; font-weight: bold; color: #111; }
+        /* Legenda Flutuante */
+        .legenda-mapa { position: absolute; bottom: 15px; right: 15px; background: white; padding: 10px; border-radius: 8px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); font-size: 11px; font-weight: bold; }
+        .legenda-item { display: flex; align-items: center; margin-bottom: 5px; cursor: pointer; }
+        .legenda-item input { margin-right: 6px; }
+        .legenda-cor { width: 14px; height: 14px; margin-right: 6px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
+        .rotulo-talhao { background: transparent !important; border: none !important; box-shadow: none !important; color: #000 !important; font-weight: bold !important; font-size: 13px !important; text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff !important; }
         
-        /* Tabela */
-        .tabela-container { background: var(--card-bg); border-radius: 8px; padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 15px; }
+        /* Dashboard BI Cards */
+        .indicadores-container { padding: 15px; max-width: 800px; margin: 0 auto; }
+        .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .card h3 { margin: 0; font-size: 13px; color: #555; text-transform: uppercase; }
+        .valor { font-size: 22px; font-weight: bold; color: #111; }
+        
+        /* Barras de Progresso BI */
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; height: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-bar { height: 100%; }
+        .pct-label { font-size: 12px; font-weight: bold; float: right; color: #666; }
+        
+        /* Tabela de Fazendas */
+        .tabela-container { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background: #eee; padding: 8px; text-align: left; font-weight: bold; color: #444; border-bottom: 2px solid #ddd; }
-        td { padding: 8px; border-bottom: 1px solid #eee; color: #555; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f1f1f1; color: #333; }
         
-        /* Footer Courier New */
-        .footer-update { font-family: 'Courier New', Courier, monospace; font-size: 12px; text-align: center; color: #777; padding: 10px; border-top: 1px dashed #ccc; margin-top: 10px; }
+        /* Rodapé Courier New */
+        .footer-atualizacao { font-family: 'Courier New', Courier, monospace; font-size: 12px; text-align: center; color: #777; padding: 10px; margin-bottom: 20px; font-weight: bold; }
         
-        /* Bottom Nav */
-        .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: white; display: flex; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 1000; }
-        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #777; cursor: pointer; border-top: 3px solid transparent; }
-        .nav-item.active { color: #2e7d32; border-top: 3px solid #2e7d32; background: #f9f9f9; }
+        /* Menu Inferior */
+        .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #888; cursor: pointer; border-top: 3px solid transparent; }
+        .nav-item.active { color: var(--primary); border-top-color: var(--primary); background: #f4fbf4; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="filtro-box">
-            <label>Ano</label>
-            <select id="filtro-ano"><option value="TODOS">Todos</option></select>
-        </div>
-        <div class="filtro-box">
-            <label>Mês</label>
-            <select id="filtro-mes"><option value="TODOS">Todos</option></select>
-        </div>
-        <div class="filtro-box" style="flex: 2; min-width: 150px;">
-            <label>Voo / Fazenda</label>
-            <select id="filtro-voo"><option value="TODOS">VER TUDO (SOMAR)</option></select>
-        </div>
+        <select id="filtro-ano"><option value="TODOS">ANO: Ver Tudo</option></select>
+        <select id="filtro-mes"><option value="TODOS">MÊS: Ver Tudo</option></select>
+        <select id="filtro-data"><option value="TODOS">DATA: Ver Tudo</option></select>
+        <select id="filtro-fazenda"><option value="TODOS">FAZENDA: Ver Tudo</option></select>
     </div>
 
-    <div id="view-mapa" class="view">
+    <div id="view-mapa" class="view active">
         <div id="mapa"></div>
+        <div class="legenda-mapa">
+            <div class="legenda-item"><input type="checkbox" id="chk-aplicado" checked onchange="toggleCamada('APLICADO')"><span class="legenda-cor" style="background:#4CAF50;"></span> APLICADO</div>
+            <div class="legenda-item"><input type="checkbox" id="chk-sobreposicao" checked onchange="toggleCamada('SOBREPOSIÇÃO')"><span class="legenda-cor" style="background:#FF9800;"></span> SOBREPOSIÇÃO</div>
+            <div class="legenda-item"><input type="checkbox" id="chk-excedente" checked onchange="toggleCamada('APLICADO FORA DO TALHÃO')"><span class="legenda-cor" style="background:#9C27B0;"></span> FORA TALHÃO</div>
+            <div class="legenda-item"><input type="checkbox" id="chk-falha" checked onchange="toggleCamada('NÃO APLICADO DENTRO DO TALHÃO')"><span class="legenda-cor" style="background:#E53935;"></span> NÃO APLICADO</div>
+            <div class="legenda-item" style="border-top:1px solid #eee; padding-top:5px;"><input type="checkbox" id="chk-talhao" checked onchange="toggleCamada('TALHAO')"><span class="legenda-cor" style="background:transparent; border:1px dashed #000;"></span> LIMITES TALHÃO</div>
+        </div>
     </div>
 
-    <div id="view-indicators" class="view active">
-        
-        <div class="bi-grid">
-            <div class="bi-card"><div id="chart-acerto"></div></div>
-            <div class="bi-card"><div id="chart-sobreposicao"></div></div>
-            <div class="bi-card"><div id="chart-excedente"></div></div>
-            <div class="bi-card"><div id="chart-falha"></div></div>
-        </div>
+    <div id="view-indicators" class="view">
+        <div class="indicadores-container">
+            <div class="card" style="border-left: 5px solid #4CAF50;">
+                <div class="card-header"><h3>Aplicado Interno</h3><span class="valor"><span id="val-acerto">0.00</span> ha</span></div>
+                <span class="pct-label" id="pct-acerto">0%</span>
+                <div class="progress-container"><div class="progress-bar" id="bar-acerto" style="width: 0%; background-color: #4CAF50;"></div></div>
+            </div>
+            
+            <div class="card" style="border-left: 5px solid #FF9800;">
+                <div class="card-header"><h3>Sobreposição</h3><span class="valor"><span id="val-sobreposicao">0.00</span> ha</span></div>
+                <span class="pct-label" id="pct-sobreposicao">0%</span>
+                <div class="progress-container"><div class="progress-bar" id="bar-sobreposicao" style="width: 0%; background-color: #FF9800;"></div></div>
+            </div>
 
-        <div class="bi-grid">
-            <div class="bi-card"><h4>Área Referência (ha)</h4><div class="bi-valor" id="val-total">0.00</div></div>
-            <div class="bi-card"><h4>Área Aplicada (ha)</h4><div class="bi-valor" id="val-aplicado">0.00</div></div>
-        </div>
+            <div class="card" style="border-left: 5px solid #E53935;">
+                <div class="card-header"><h3>Não Aplicado (Falha)</h3><span class="valor"><span id="val-falha">0.00</span> ha</span></div>
+                <span class="pct-label" id="pct-falha">0%</span>
+                <div class="progress-container"><div class="progress-bar" id="bar-falha" style="width: 0%; background-color: #E53935;"></div></div>
+            </div>
 
-        <div class="tabela-container">
-            <table id="tabela-dados">
-                <thead><tr><th>Fazenda</th><th>Data Voo</th><th>Processado Em</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
+            <div class="card" style="border-left: 5px solid #9C27B0;">
+                <div class="card-header"><h3>Excedente (Fora Talhão)</h3><span class="valor"><span id="val-excedente">0.00</span> ha</span></div>
+                <span class="pct-label" id="pct-excedente">0%</span>
+                <div class="progress-container"><div class="progress-bar" id="bar-excedente" style="width: 0%; background-color: #9C27B0;"></div></div>
+            </div>
+            
+            <div class="card" style="background-color: #f1f8e9; border: 1px solid #c5e1a5;">
+                <div class="card-header"><h3 style="color:#33691e;">Área Total de Referência</h3><span class="valor" style="color:#33691e;"><span id="val-total">0.00</span> ha</span></div>
+            </div>
 
-        <div class="footer-update" id="texto-atualizacao">Ultima atualização em: --</div>
+            <div class="tabela-container">
+                <h3 style="margin-top:0; color:#444; font-size: 14px;">Fazendas Processadas</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fazenda</th>
+                            <th>Data Voo</th>
+                            <th>Processamento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div class="footer-atualizacao" id="texto-rodape">Ultima atualização em: --</div>
+        </div>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item" onclick="switchView('mapa')">🗺️ MAPA</div>
-        <div class="nav-item active" onclick="switchView('indicators')">📊 DASHBOARD BI</div>
+        <div class="nav-item active" onclick="switchView('mapa')">🗺️ MAPA</div>
+        <div class="nav-item" onclick="switchView('indicators')">📊 DASHBOARD BI</div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
         let map;
         let dadosCSV = [];
         let geojsonFeaturesArmazenadas = [];
-        let charts = {};
+        let ultimaDataProcessamento = "--";
 
-        // Opções base para os gráficos ApexCharts
-        function criarOpcoesGrafico(cor, titulo) {
-            return {
-                series: [0],
-                chart: { type: 'radialBar', height: 160, sparkline: { enabled: true } },
-                colors: [cor],
-                plotOptions: {
-                    radialBar: {
-                        hollow: { size: '50%' },
-                        dataLabels: {
-                            name: { show: true, fontSize: '10px', color: '#666', offsetY: 15 },
-                            value: { show: true, fontSize: '16px', fontWeight: 'bold', color: '#111', offsetY: -5, formatter: function (val) { return val + "%" } }
-                        }
-                    }
-                },
-                labels: [titulo]
-            };
-        }
+        const mapaCores = {
+            "APLICADO": "#4CAF50", "SOBREPOSIÇÃO": "#FF9800",
+            "APLICADO FORA DO TALHÃO": "#9C27B0", "NÃO APLICADO DENTRO DO TALHÃO": "#E53935"
+        };
 
-        function renderizarGraficos() {
-            charts.acerto = new ApexCharts(document.querySelector("#chart-acerto"), criarOpcoesGrafico('#4CAF50', 'ACERTO'));
-            charts.sobreposicao = new ApexCharts(document.querySelector("#chart-sobreposicao"), criarOpcoesGrafico('#FF9800', 'SOBREPOS.'));
-            charts.excedente = new ApexCharts(document.querySelector("#chart-excedente"), criarOpcoesGrafico('#9C27B0', 'EXCEDENTE'));
-            charts.falha = new ApexCharts(document.querySelector("#chart-falha"), criarOpcoesGrafico('#E53935', 'FALHA'));
-            
-            Object.values(charts).forEach(c => c.render());
-        }
+        let gruposCamadas = {
+            "APLICADO": L.layerGroup(), "SOBREPOSIÇÃO": L.layerGroup(),
+            "APLICADO FORA DO TALHÃO": L.layerGroup(), "NÃO APLICADO DENTRO DO TALHÃO": L.layerGroup(),
+            "TALHAO": L.layerGroup()
+        };
 
         function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -138,129 +156,207 @@
 
         function initMap() {
             map = L.map('mapa', { zoomControl: false }).setView([-21.5, -50.2], 12);
-            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] }).addTo(map);
+            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+            }).addTo(map);
+            Object.values(gruposCamadas).forEach(g => g.addTo(map));
+        }
+
+        function toggleCamada(nomeClasse) {
+            const checkMap = {
+                'APLICADO': 'chk-aplicado', 'SOBREPOSIÇÃO': 'chk-sobreposicao',
+                'APLICADO FORA DO TALHÃO': 'chk-excedente', 'NÃO APLICADO DENTRO DO TALHÃO': 'chk-falha', 'TALHAO': 'chk-talhao'
+            };
+            if (document.getElementById(checkMap[nomeClasse]).checked) map.addLayer(gruposCamadas[nomeClasse]);
+            else map.removeLayer(gruposCamadas[nomeClasse]);
         }
 
         function carregarDadosIniciais() {
-            fetch('./dados/lista.json')
-                .then(r => r.json())
-                .then(lista => {
-                    let promessas = [];
-                    lista.forEach(nomeBase => {
-                        let pCsv = new Promise((resolve) => {
-                            Papa.parse(`./dados/${nomeBase}.csv`, {
-                                download: true, header: true, delimiter: ";", skipEmptyLines: true,
-                                complete: function(res) {
-                                    res.data.forEach(item => {
-                                        if(item.FAZENDA_COD) {
-                                            item._origem_id = nomeBase;
-                                            
-                                            // Extrai Ano e Mês da DATA_INICIO (Assume formato DD-MM-YYYY)
-                                            let partesData = item.DATA_INICIO.split('-');
-                                            if(partesData.length === 3) {
-                                                item._mes = partesData[1];
-                                                item._ano = partesData[2];
-                                            } else {
-                                                item._mes = "N/A"; item._ano = "N/A";
+            fetch('./dados/lista.json').then(r => r.json()).then(lista => {
+                let promessas = [];
+                lista.forEach(nomeBase => {
+                    let pGeo = fetch(`./dados/${nomeBase}.geojson`).then(r => r.json()).then(geo => {
+                        geojsonFeaturesArmazenadas.push({ id: nomeBase, dados: geo });
+                    });
+                    
+                    let pCsv = new Promise((resolve) => {
+                        Papa.parse(`./dados/${nomeBase}.csv`, {
+                            download: true, header: true, delimiter: ";", skipEmptyLines: true,
+                            complete: function(res) {
+                                res.data.forEach(item => {
+                                    if(item.FAZENDA_COD) {
+                                        // Extrai Mês e Ano da Data de Início (formato dd-mm-yyyy)
+                                        if(item.DATA_INICIO) {
+                                            let partes = item.DATA_INICIO.split('-');
+                                            if(partes.length === 3) {
+                                                item.ANO = partes[2];
+                                                item.MES = partes[1];
                                             }
-                                            
-                                            dadosCSV.push(item);
                                         }
-                                    });
-                                    resolve();
-                                },
-                                error: function() { resolve(); }
-                            });
+                                        item._origem_id = nomeBase;
+                                        dadosCSV.push(item);
+                                        
+                                        // Captura a data de processamento mais recente (Gambiarra funcional)
+                                        if(item.DATA_PROCESSAMENTO) ultimaDataProcessamento = item.DATA_PROCESSAMENTO;
+                                    }
+                                });
+                                resolve();
+                            },
+                            error: function() { resolve(); }
                         });
-                        promessas.push(pCsv);
                     });
-
-                    Promise.all(promessas).then(() => {
-                        configurarFiltros();
-                        renderizarSelecaoBI();
-                    });
+                    promessas.push(pGeo, pCsv);
                 });
+
+                Promise.all(promessas).then(() => {
+                    document.getElementById('texto-rodape').innerText = "Ultima atualização em: " + ultimaDataProcessamento;
+                    popularFiltrosCascata();
+                    renderizarDashboardEMapa();
+                });
+            });
         }
 
-        function configurarFiltros() {
+        function popularFiltrosCascata() {
+            const anos = [...new Set(dadosCSV.map(i => i.ANO))].filter(Boolean).sort();
+            const meses = [...new Set(dadosCSV.map(i => i.MES))].filter(Boolean).sort();
+            const datas = [...new Set(dadosCSV.map(i => i.DATA_INICIO))].filter(Boolean).sort();
+            
+            // Popula Ano
             const cbAno = document.getElementById('filtro-ano');
-            const cbMes = document.getElementById('filtro-mes');
-            const cbVoo = document.getElementById('filtro-voo');
-
-            let anos = [...new Set(dadosCSV.map(i => i._ano))].filter(a => a !== "N/A").sort();
-            let meses = [...new Set(dadosCSV.map(i => i._mes))].filter(m => m !== "N/A").sort();
-
             anos.forEach(a => cbAno.add(new Option(a, a)));
+            
+            // Popula Mes
+            const cbMes = document.getElementById('filtro-mes');
             meses.forEach(m => cbMes.add(new Option(m, m)));
+            
+            // Popula Data
+            const cbData = document.getElementById('filtro-data');
+            datas.forEach(d => cbData.add(new Option(d, d)));
+            
+            // Popula Fazenda Combinada
+            const cbFaz = document.getElementById('filtro-fazenda');
+            let fazendasUnicas = [...new Set(dadosCSV.map(i => `${i.FAZENDA_COD} - ${i.FAZENDA_NOME}`))];
+            fazendasUnicas.forEach(f => cbFaz.add(new Option(f, f)));
 
-            dadosCSV.forEach(row => {
-                let rotulo = `${row.FAZENDA_COD} - ${row.FAZENDA_NOME} - ${row.DATA_INICIO}`;
-                cbVoo.add(new Option(rotulo, row._origem_id));
+            // Event Listeners
+            ['filtro-ano', 'filtro-mes', 'filtro-data', 'filtro-fazenda'].forEach(id => {
+                document.getElementById(id).addEventListener('change', renderizarDashboardEMapa);
             });
-
-            cbAno.addEventListener('change', renderizarSelecaoBI);
-            cbMes.addEventListener('change', renderizarSelecaoBI);
-            cbVoo.addEventListener('change', renderizarSelecaoBI);
         }
 
-        function renderizarSelecaoBI() {
-            let anoSel = document.getElementById('filtro-ano').value;
-            let mesSel = document.getElementById('filtro-mes').value;
-            let vooSel = document.getElementById('filtro-voo').value;
+        function renderizarDashboardEMapa() {
+            const anoSel = document.getElementById('filtro-ano').value;
+            const mesSel = document.getElementById('filtro-mes').value;
+            const dataSel = document.getElementById('filtro-data').value;
+            const fazSel = document.getElementById('filtro-fazenda').value;
 
-            // Lógica de Filtragem (Se for VOO específico, ignora Ano/Mês)
-            let filtrados = dadosCSV.filter(row => {
-                if (vooSel !== 'TODOS') return row._origem_id === vooSel;
-                
-                let passaAno = (anoSel === 'TODOS' || row._ano === anoSel);
-                let passaMes = (mesSel === 'TODOS' || row._mes === mesSel);
-                return passaAno && passaMes;
+            // 1. FILTRAGEM DOS DADOS
+            let dadosFiltrados = dadosCSV.filter(row => {
+                let passaAno = (anoSel === 'TODOS' || row.ANO === anoSel);
+                let passaMes = (mesSel === 'TODOS' || row.MES === mesSel);
+                let passaData = (dataSel === 'TODOS' || row.DATA_INICIO === dataSel);
+                let passaFaz = (fazSel === 'TODOS' || `${row.FAZENDA_COD} - ${row.FAZENDA_NOME}` === fazSel);
+                return passaAno && passaMes && passaData && passaFaz;
             });
 
-            // Váriaveis de Soma
-            let aRef = 0, aAcerto = 0, aSobreposicao = 0, aExcedente = 0, aFalha = 0;
-            let ultimaDataProc = "N/A";
+            // 2. AGREGAÇÃO PARA OS CARDS BI
+            let somaAcerto = 0, somaSobre = 0, somaExcedente = 0, somaFalha = 0, somaTotal = 0;
+            
+            dadosFiltrados.forEach(row => {
+                somaAcerto += parseFloat(row.AREA_APLICADA_INTERNA_HA) || 0;
+                somaSobre += parseFloat(row.AREA_SOBREPOSTA_HA) || 0;
+                somaExcedente += parseFloat(row.AREA_FORA_TALHAO_HA) || 0;
+                somaFalha += parseFloat(row.AREA_NAO_APLICADA_HA) || 0;
+                somaTotal += parseFloat(row.AREA_REF_TOTAL_HA) || 0;
+            });
 
-            let tbody = document.querySelector('#tabela-dados tbody');
+            // Atualiza Textos
+            document.getElementById('val-acerto').innerText = somaAcerto.toFixed(2);
+            document.getElementById('val-sobreposicao').innerText = somaSobre.toFixed(2);
+            document.getElementById('val-excedente').innerText = somaExcedente.toFixed(2);
+            document.getElementById('val-falha').innerText = somaFalha.toFixed(2);
+            document.getElementById('val-total').innerText = somaTotal.toFixed(2);
+
+            // Atualiza Barras de Progresso (Cálculo de Porcentagem)
+            let baseProgresso = somaTotal > 0 ? somaTotal : 1; 
+            let baseAplicado = (somaAcerto + somaSobre + somaExcedente) > 0 ? (somaAcerto + somaSobre + somaExcedente) : 1;
+
+            let pctAcerto = ((somaAcerto / baseAplicado) * 100).toFixed(1);
+            let pctSobre = ((somaSobre / baseAplicado) * 100).toFixed(1);
+            let pctExcedente = ((somaExcedente / baseAplicado) * 100).toFixed(1);
+            let pctFalha = ((somaFalha / baseProgresso) * 100).toFixed(1);
+
+            document.getElementById('bar-acerto').style.width = `${pctAcerto}%`;
+            document.getElementById('pct-acerto').innerText = `${pctAcerto}%`;
+            
+            document.getElementById('bar-sobreposicao').style.width = `${pctSobre}%`;
+            document.getElementById('pct-sobreposicao').innerText = `${pctSobre}%`;
+            
+            document.getElementById('bar-excedente').style.width = `${pctExcedente}%`;
+            document.getElementById('pct-excedente').innerText = `${pctExcedente}%`;
+            
+            document.getElementById('bar-falha').style.width = `${pctFalha}%`;
+            document.getElementById('pct-falha').innerText = `${pctFalha}%`;
+
+            // 3. PREENCHER TABELA
+            const tbody = document.getElementById('tabela-corpo');
             tbody.innerHTML = '';
+            
+            // Pega apenas registros únicos para a tabela baseados no _origem_id
+            let voosUnicos = [...new Map(dadosFiltrados.map(item => [item._origem_id, item])).values()];
+            
+            voosUnicos.forEach(row => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `<td>${row.FAZENDA_COD} - ${row.FAZENDA_NOME}</td><td>${row.DATA_INICIO}</td><td>${row.DATA_PROCESSAMENTO || '--'}</td>`;
+                tbody.appendChild(tr);
+            });
 
-            filtrados.forEach(row => {
-                aRef += parseFloat(row.AREA_REF_TOTAL_HA) || 0;
-                aAcerto += parseFloat(row.AREA_APLICADA_INTERNA_HA) || 0;
-                aSobreposicao += parseFloat(row.AREA_SOBREPOSTA_HA) || 0;
-                aExcedente += parseFloat(row.AREA_FORA_TALHAO_HA) || 0;
-                aFalha += parseFloat(row.AREA_NAO_APLICADA_HA) || 0;
-                
-                // Preenche a tabela
-                tbody.innerHTML += `<tr><td>${row.FAZENDA_NOME}</td><td>${row.DATA_INICIO}</td><td>${row.DATA_PROCESSAMENTO}</td></tr>`;
-                
-                // Pega a maior (última) data de processamento
-                if (row.DATA_PROCESSAMENTO > ultimaDataProc || ultimaDataProc === "N/A") {
-                    ultimaDataProc = row.DATA_PROCESSAMENTO;
+            if(voosUnicos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Nenhum dado encontrado para este filtro.</td></tr>';
+            }
+
+            // 4. ATUALIZAR MAPA COM ZOOM DINÂMICO
+            Object.values(gruposCamadas).forEach(g => g.clearLayers());
+            let boundsGeral = L.featureGroup();
+
+            let idsFiltrados = voosUnicos.map(v => v._origem_id);
+            
+            idsFiltrados.forEach(alvoId => {
+                let pacoteGeo = geojsonFeaturesArmazenadas.find(g => g.id === alvoId);
+                if (pacoteGeo) {
+                    L.geoJSON(pacoteGeo.dados, {
+                        style: function(feature) {
+                            let tipo = feature.properties.TIPO_GEO;
+                            if (tipo === "TALHAO") return { color: "#000000", weight: 2, fillOpacity: 0 };
+                            let cls = feature.properties.CLASSE;
+                            let cor = mapaCores[cls] || "#999";
+                            return { color: cor, weight: 0.5, fillColor: cor, fillOpacity: 0.55 };
+                        },
+                        onEachFeature: function(feature, layer) {
+                            let tipo = feature.properties.TIPO_GEO;
+                            if (tipo === "TALHAO") {
+                                if (feature.properties.TALHAO) {
+                                    layer.bindTooltip(String(parseInt(feature.properties.TALHAO)), {
+                                        permanent: true, direction: 'center', className: 'rotulo-talhao'
+                                    });
+                                }
+                                layer.addTo(gruposCamadas["TALHAO"]);
+                            } else {
+                                let cls = feature.properties.CLASSE;
+                                if (gruposCamadas[cls]) layer.addTo(gruposCamadas[cls]);
+                            }
+                            layer.addTo(boundsGeral);
+                        }
+                    });
                 }
             });
 
-            // Atualiza Rodapé
-            document.getElementById('texto-atualizacao').innerText = `Ultima atualização em: ${ultimaDataProc}`;
-
-            // Atualiza Cards de Área
-            document.getElementById('val-total').innerText = aRef.toFixed(2);
-            document.getElementById('val-aplicado').innerText = aAcerto.toFixed(2);
-
-            // Recalcula Índices Percentuais baseados nas somas
-            let pAcerto = aRef > 0 ? (aAcerto / aRef) * 100 : 0;
-            let pSobre = aRef > 0 ? (aSobreposicao / aRef) * 100 : 0;
-            let pExcede = aRef > 0 ? (aExcedente / aRef) * 100 : 0;
-            let pFalha = aRef > 0 ? (aFalha / aRef) * 100 : 0;
-
-            // Atualiza Gráficos ApexCharts
-            charts.acerto.updateSeries([parseFloat(pAcerto.toFixed(1))]);
-            charts.sobreposicao.updateSeries([parseFloat(pSobre.toFixed(1))]);
-            charts.excedente.updateSeries([parseFloat(pExcede.toFixed(1))]);
-            charts.falha.updateSeries([parseFloat(pFalha.toFixed(1))]);
+            // Enquadrar na tela a fazenda ou o conjunto filtrado
+            if(boundsGeral.getLayers().length > 0) {
+                map.flyToBounds(boundsGeral.getBounds(), { padding: [20, 20], duration: 0.5 });
+            }
         }
 
-        renderizarGraficos();
         initMap();
         carregarDadosIniciais();
     </script>
