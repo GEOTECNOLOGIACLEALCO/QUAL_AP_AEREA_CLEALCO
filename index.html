@@ -130,18 +130,41 @@
         let geojsonFeatures = [];
         let graficos = {};
 
-        // Cores Sólidas (Sem Transparência) conforme solicitado
+        // Cores Sólidas exigidas (Zero transparência)
         const mapaCores = {
-            "APLICADO": "#006400", // Verde Escuro
-            "SOBREPOSIÇÃO": "#00008B", // Azul Escuro
-            "NÃO APLICADO DENTRO DO TALHÃO": "#FFFF00", // Amarelo
-            "APLICADO FORA DO TALHÃO": "#FF0000" // Vermelho
+            "APLICADO": "#006400", 
+            "SOBREPOSIÇÃO": "#00008B", 
+            "NÃO APLICADO DENTRO DO TALHÃO": "#FFFF00", 
+            "APLICADO FORA DO TALHÃO": "#FF0000"
         };
 
         let gruposCamadas = {
             "APLICADO": L.layerGroup(), "SOBREPOSIÇÃO": L.layerGroup(),
             "APLICADO FORA DO TALHÃO": L.layerGroup(), "NÃO APLICADO DENTRO DO TALHÃO": L.layerGroup(), "TALHAO": L.layerGroup()
         };
+
+        // PLUGIN SECRETO DO CHART.JS PARA ESCREVER NO MEIO DA ROSCA
+        const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw: function(chart) {
+                if (chart.config.type !== 'doughnut') return;
+                let width = chart.width, height = chart.height, ctx = chart.ctx;
+                ctx.restore();
+                let fontSize = (height / 100).toFixed(2);
+                ctx.font = "bold " + fontSize + "em 'Segoe UI', sans-serif";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = "#333";
+                
+                let val = chart.data.datasets[0].data[0] || 0;
+                let text = val.toFixed(1) + "%",
+                    textX = Math.round((width - ctx.measureText(text).width) / 2),
+                    textY = height / 2;
+                
+                ctx.fillText(text, textX, textY);
+                ctx.save();
+            }
+        };
+        Chart.register(centerTextPlugin);
 
         function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -185,7 +208,6 @@
                             c.data.forEach(item => {
                                 if(item.FAZENDA_COD) {
                                     item._id = id;
-                                    // Quebra a data para os filtros
                                     if(item.DATA_INICIO) {
                                         let p = item.DATA_INICIO.split('-');
                                         if(p.length === 3) { item._ano = p[2]; item._mes = p[1]; item._dia = p[0]; }
@@ -229,7 +251,6 @@
             fa = getFiltrosAtuais();
             if(fa.data !== 'TODOS') ds = ds.filter(d => d.DATA_INICIO === fa.data);
 
-            // Popula Area (Visão Específica)
             let comboArea = document.getElementById('f-area');
             comboArea.innerHTML = '<option value="TUDO">VER TUDO (Consolidado)</option>';
             ds.forEach(r => comboArea.add(new Option(`${r.FAZENDA_COD} - ${r.FAZENDA_NOME} (${r.DATA_INICIO})`, r._id)));
@@ -249,14 +270,12 @@
             let idAlvo = document.getElementById('f-area').value;
             let fa = getFiltrosAtuais();
             
-            // Filtra os dados baseados na hierarquia
             let dadosFiltrados = dadosCSV.filter(d => {
                 let matchTempo = (fa.ano === 'TODOS' || d._ano === fa.ano) && (fa.mes === 'TODOS' || d._mes === fa.mes) && (fa.data === 'TODOS' || d.DATA_INICIO === fa.data);
                 let matchId = (idAlvo === 'TUDO' || d._id === idAlvo);
                 return matchTempo && matchId;
             });
 
-            // Somatórios
             let sums = { a:0, s:0, f:0, e:0, t:0 };
             dadosFiltrados.forEach(r => {
                 sums.a += parseFloat(r.AREA_APLICADA_INTERNA_HA)||0; sums.s += parseFloat(r.AREA_SOBREPOSTA_HA)||0;
@@ -270,19 +289,19 @@
             document.getElementById('val-excedente').innerText = sums.e.toFixed(2);
             document.getElementById('val-total').innerText = sums.t.toFixed(2);
 
-            // Atualiza Gráficos (Porcentagem baseada no Total Aplicado para os relativos, e Area Ref para Falha)
-            let totalAplicado = sums.a + sums.s + sums.e; // Logica padrão de aplicação
-            let pctA = totalAplicado ? (sums.a/sums.t)*100 : 0;
-            let pctS = totalAplicado ? (sums.s/sums.t)*100 : 0;
-            let pctF = sums.t ? (sums.f/sums.t)*100 : 0;
-            let pctE = totalAplicado ? (sums.e/sums.t)*100 : 0; // Aproximação visual
+            // CÁLCULO BASEADO EXCLUSIVAMENTE NA ÁREA DE REFERÊNCIA TOTAL DO TALHÃO
+            let areaReferenciaTotal = sums.t > 0 ? sums.t : 1; // Para não causar um buraco negro dividindo por zero
 
-            graficos.acerto.data.datasets[0].data = [pctA, 100-pctA]; graficos.acerto.update();
-            graficos.sobreposicao.data.datasets[0].data = [pctS, 100-pctS]; graficos.sobreposicao.update();
-            graficos.falha.data.datasets[0].data = [pctF, 100-pctF]; graficos.falha.update();
-            graficos.excedente.data.datasets[0].data = [pctE, 100-pctE]; graficos.excedente.update();
+            let pctA = (sums.a / areaReferenciaTotal) * 100;
+            let pctS = (sums.s / areaReferenciaTotal) * 100;
+            let pctF = (sums.f / areaReferenciaTotal) * 100;
+            let pctE = (sums.e / areaReferenciaTotal) * 100; 
 
-            // Atualiza Tabela e Rodapé
+            graficos.acerto.data.datasets[0].data = [pctA, 100 - pctA > 0 ? 100 - pctA : 0]; graficos.acerto.update();
+            graficos.sobreposicao.data.datasets[0].data = [pctS, 100 - pctS > 0 ? 100 - pctS : 0]; graficos.sobreposicao.update();
+            graficos.falha.data.datasets[0].data = [pctF, 100 - pctF > 0 ? 100 - pctF : 0]; graficos.falha.update();
+            graficos.excedente.data.datasets[0].data = [pctE, 100 - pctE > 0 ? 100 - pctE : 0]; graficos.excedente.update();
+
             let htmlTab = '';
             let ultimaDataProc = '--';
             dadosFiltrados.forEach(r => {
@@ -292,7 +311,6 @@
             document.getElementById('tabela-corpo').innerHTML = htmlTab;
             document.getElementById('rodape-data').innerText = "Ultima atualização em: " + ultimaDataProc;
 
-            // RENDERIZAÇÃO DO MAPA (Sólido, Opacidade 1)
             Object.values(gruposCamadas).forEach(g => g.clearLayers());
             let boundsGeral = L.featureGroup();
             
@@ -303,7 +321,7 @@
                     style: f => {
                         if (f.properties.TIPO_GEO === "TALHAO") return { color: "#000", weight: 2, fillOpacity: 0 };
                         let cor = mapaCores[f.properties.CLASSE] || "#999";
-                        return { color: cor, weight: 1, fillColor: cor, fillOpacity: 1.0 }; // OPACIDADE TOTAL AQUI
+                        return { color: cor, weight: 1, fillColor: cor, fillOpacity: 1.0 }; // ZERO TRANSPARÊNCIA, SÓLIDO
                     },
                     onEachFeature: (f, layer) => {
                         let tipo = f.properties.TIPO_GEO;
