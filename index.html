@@ -44,10 +44,10 @@
         .bi-valor { font-size: 15px; font-weight: bold; color: #222; margin-top: 12px; background: #f4f4f4; padding: 4px 10px; border-radius: 4px; }
         .bi-resumo { background: white; padding: 12px; text-align: center; border-radius: 8px; font-size: 14px; color: #444; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #333; }
         
-        /* Tabela */
-        .tabela-container { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background: #f0f0f0; padding: 10px; text-align: left; color: #444; }
+        /* Tabela com Scroll Horizontal para Caber Tudo */
+        .tabela-container { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
+        th { background: #f0f0f0; padding: 10px; text-align: left; color: #444; border-bottom: 2px solid #ddd; }
         td { padding: 10px; border-top: 1px solid #eee; color: #555; }
         
         /* Footer Courier New */
@@ -142,7 +142,16 @@
 
                 <div class="tabela-container">
                     <table>
-                        <thead><tr><th>Fazenda</th><th>Data Voo</th><th>Processamento</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Cód. Fazenda</th>
+                                <th>Desc. Fazenda</th>
+                                <th>Data Voo</th>
+                                <th>Área Talhão (ha)</th>
+                                <th>Aplic. + Sobreposição (ha)</th>
+                                <th>Processamento</th>
+                            </tr>
+                        </thead>
                         <tbody id="tabela-corpo"></tbody>
                     </table>
                 </div>
@@ -161,34 +170,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // --- SISTEMA DE LOGIN DE ALTÍSSIMA SEGURANÇA (Favor não rir) ---
+        // Sistema de Login Implacável
         function tentarLogin() {
             const u = document.getElementById('ipt-user').value.toLowerCase();
             const p = document.getElementById('ipt-pass').value;
-            
-            // Dicionário de senhas indecifráveis
-            const credenciais = {
-                'admin': 'admin',
-                'gerente': '123456',
-                'visitante': '1234',
-                'usina': 'senha123'
-            };
+            const credenciais = { 'admin': 'admin', 'gerente': '123456', 'visitante': '1234', 'usina': 'senha123' };
 
             if (credenciais[u] && credenciais[u] === p) {
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
-                // Inicia o mapa só depois que a div estiver visível, senão o Leaflet quebra o tamanho
                 setTimeout(() => { map.invalidateSize(); }, 200);
             } else {
                 document.getElementById('erro-login').style.display = 'block';
             }
         }
-        // Permite logar apertando ENTER
         document.getElementById('ipt-pass').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') tentarLogin();
         });
 
-        // --- RESTO DO CÓDIGO DO APP ---
+        // Configuração Geral
         let map;
         let dadosCSV = [];
         let geojsonFeatures = [];
@@ -320,9 +320,21 @@
             graficos.falha.data.datasets[0].data = [pctF, 100 - pctF > 0 ? 100 - pctF : 0]; graficos.falha.update();
             graficos.excedente.data.datasets[0].data = [pctE, 100 - pctE > 0 ? 100 - pctE : 0]; graficos.excedente.update();
 
+            // PREENCHENDO A NOVA TABELA GIGANTE
             let htmlTab = '', ultimaDataProc = '--';
             dadosFiltrados.forEach(r => {
-                htmlTab += `<tr><td>${r.FAZENDA_NOME}</td><td>${r.DATA_INICIO}</td><td>${r.DATA_PROCESSAMENTO || '--'}</td></tr>`;
+                let areaTalhao = parseFloat(r.AREA_REF_TOTAL_HA) || 0;
+                let aplicadoMaisSobreposto = (parseFloat(r.AREA_APLICADA_INTERNA_HA) || 0) + (parseFloat(r.AREA_SOBREPOSTA_HA) || 0);
+
+                htmlTab += `<tr>
+                    <td>${r.FAZENDA_COD}</td>
+                    <td>${r.FAZENDA_NOME}</td>
+                    <td>${r.DATA_INICIO}</td>
+                    <td>${areaTalhao.toFixed(2)}</td>
+                    <td>${aplicadoMaisSobreposto.toFixed(2)}</td>
+                    <td>${r.DATA_PROCESSAMENTO || '--'}</td>
+                </tr>`;
+                
                 if(r.DATA_PROCESSAMENTO) ultimaDataProc = r.DATA_PROCESSAMENTO;
             });
             document.getElementById('tabela-corpo').innerHTML = htmlTab;
