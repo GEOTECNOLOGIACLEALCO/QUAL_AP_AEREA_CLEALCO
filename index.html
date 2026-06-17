@@ -3,147 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Painel BI - Aplicação Aérea</title>
+    <title>Painel BI - Qualidade Aérea</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --primary: #2e7d32; --bg: #e9ecef; --text: #333; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+        :root { --primary: #006400; --bg: #eef2f5; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); overflow: hidden; }
         
-        /* Filtros BI */
-        .header { position: absolute; top: 0; left: 0; right: 0; background: white; padding: 10px; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .header select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; background: #f8f9fa; }
-        .header select.full-width { grid-column: span 2; }
+        /* Cabeçalho e Filtros BI */
+        .header { position: absolute; top: 0; left: 0; right: 0; background: white; padding: 10px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; gap: 8px; }
+        .filtro-grupo { flex: 1; min-width: 80px; display: flex; flex-direction: column; }
+        .filtro-grupo label { font-size: 10px; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 2px; }
+        select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; color: #333; background: #f9f9f9; }
         
         /* Views */
-        .view { position: absolute; top: 100px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
+        .view { position: absolute; top: 90px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
         .view.active { display: block; }
         #mapa { height: 100%; width: 100%; }
         
-        /* Legenda Flutuante */
+        /* Layout Indicadores BI */
+        .indicadores-container { padding: 15px; }
+        .cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid var(--primary); }
+        .card h3 { margin: 0 0 5px 0; font-size: 11px; color: #777; text-transform: uppercase; }
+        .card .valor { font-size: 20px; font-weight: bold; color: #222; }
+        
+        /* Gráficos Chart.js */
+        .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .chart-box { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; }
+        .chart-box h4 { margin: 0 0 10px 0; font-size: 12px; color: #555; }
+        .chart-container { position: relative; height: 120px; width: 100%; }
+        
+        /* Tabela de Fazendas */
+        .tabela-container { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background: #f0f0f0; padding: 10px; text-align: left; color: #444; }
+        td { padding: 10px; border-top: 1px solid #eee; color: #555; }
+        
+        /* Footer Courier New */
+        .footer-texto { font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #666; text-align: center; padding: 10px; margin-bottom: 20px; }
+        
+        /* Legenda Flutuante Mapa */
         .legenda-mapa { position: absolute; bottom: 15px; right: 15px; background: white; padding: 10px; border-radius: 8px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); font-size: 11px; font-weight: bold; }
         .legenda-item { display: flex; align-items: center; margin-bottom: 5px; cursor: pointer; }
         .legenda-item input { margin-right: 6px; }
-        .legenda-cor { width: 14px; height: 14px; margin-right: 6px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
-        .rotulo-talhao { background: transparent !important; border: none !important; box-shadow: none !important; color: #000 !important; font-weight: bold !important; font-size: 13px !important; text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff !important; }
+        .legenda-cor { width: 14px; height: 14px; margin-right: 6px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.2); }
+        .rotulo-talhao { background: transparent !important; border: none !important; box-shadow: none !important; color: #000 !important; font-weight: bold !important; font-size: 14px !important; text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff !important; }
         
-        /* Dashboard BI Cards */
-        .indicadores-container { padding: 15px; max-width: 800px; margin: 0 auto; }
-        .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .card h3 { margin: 0; font-size: 13px; color: #555; text-transform: uppercase; }
-        .valor { font-size: 22px; font-weight: bold; color: #111; }
-        
-        /* Barras de Progresso BI */
-        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; height: 10px; overflow: hidden; margin-top: 5px; }
-        .progress-bar { height: 100%; }
-        .pct-label { font-size: 12px; font-weight: bold; float: right; color: #666; }
-        
-        /* Tabela de Fazendas */
-        .tabela-container { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f1f1f1; color: #333; }
-        
-        /* Rodapé Courier New */
-        .footer-atualizacao { font-family: 'Courier New', Courier, monospace; font-size: 12px; text-align: center; color: #777; padding: 10px; margin-bottom: 20px; font-weight: bold; }
-        
-        /* Menu Inferior */
-        .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #888; cursor: pointer; border-top: 3px solid transparent; }
-        .nav-item.active { color: var(--primary); border-top-color: var(--primary); background: #f4fbf4; }
+        /* Nav */
+        .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: white; display: flex; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #777; cursor: pointer; }
+        .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); background: #f9f9f9; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <select id="filtro-ano"><option value="TODOS">ANO: Ver Tudo</option></select>
-        <select id="filtro-mes"><option value="TODOS">MÊS: Ver Tudo</option></select>
-        <select id="filtro-data"><option value="TODOS">DATA: Ver Tudo</option></select>
-        <select id="filtro-fazenda"><option value="TODOS">FAZENDA: Ver Tudo</option></select>
+        <div class="filtro-grupo">
+            <label>Ano</label>
+            <select id="f-ano" onchange="atualizarFiltrosCascata('ano')"><option value="TODOS">Todos</option></select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Mês</label>
+            <select id="f-mes" onchange="atualizarFiltrosCascata('mes')"><option value="TODOS">Todos</option></select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Data</label>
+            <select id="f-data" onchange="atualizarFiltrosCascata('data')"><option value="TODOS">Todas</option></select>
+        </div>
+        <div class="filtro-grupo" style="flex: 100%; margin-top: 5px;">
+            <label>Seleção de Área</label>
+            <select id="f-area" onchange="renderizarPainel()"><option value="TUDO">VER TUDO (Consolidado)</option></select>
+        </div>
     </div>
 
     <div id="view-mapa" class="view active">
         <div id="mapa"></div>
         <div class="legenda-mapa">
-            <div class="legenda-item"><input type="checkbox" id="chk-aplicado" checked onchange="toggleCamada('APLICADO')"><span class="legenda-cor" style="background:#4CAF50;"></span> APLICADO</div>
-            <div class="legenda-item"><input type="checkbox" id="chk-sobreposicao" checked onchange="toggleCamada('SOBREPOSIÇÃO')"><span class="legenda-cor" style="background:#FF9800;"></span> SOBREPOSIÇÃO</div>
-            <div class="legenda-item"><input type="checkbox" id="chk-excedente" checked onchange="toggleCamada('APLICADO FORA DO TALHÃO')"><span class="legenda-cor" style="background:#9C27B0;"></span> FORA TALHÃO</div>
-            <div class="legenda-item"><input type="checkbox" id="chk-falha" checked onchange="toggleCamada('NÃO APLICADO DENTRO DO TALHÃO')"><span class="legenda-cor" style="background:#E53935;"></span> NÃO APLICADO</div>
-            <div class="legenda-item" style="border-top:1px solid #eee; padding-top:5px;"><input type="checkbox" id="chk-talhao" checked onchange="toggleCamada('TALHAO')"><span class="legenda-cor" style="background:transparent; border:1px dashed #000;"></span> LIMITES TALHÃO</div>
+            <div class="legenda-item"><input type="checkbox" id="chk-aplicado" checked onchange="toggleCamada('APLICADO')"><span class="legenda-cor" style="background:#006400;"></span> APLICADO</div>
+            <div class="legenda-item"><input type="checkbox" id="chk-sobreposicao" checked onchange="toggleCamada('SOBREPOSIÇÃO')"><span class="legenda-cor" style="background:#00008B;"></span> SOBREPOSIÇÃO</div>
+            <div class="legenda-item"><input type="checkbox" id="chk-falha" checked onchange="toggleCamada('NÃO APLICADO DENTRO DO TALHÃO')"><span class="legenda-cor" style="background:#FFFF00;"></span> NÃO APLICADO</div>
+            <div class="legenda-item"><input type="checkbox" id="chk-excedente" checked onchange="toggleCamada('APLICADO FORA DO TALHÃO')"><span class="legenda-cor" style="background:#FF0000;"></span> APLIC. FORA</div>
+            <div class="legenda-item" style="border-top:1px solid #ccc; padding-top:4px;"><input type="checkbox" id="chk-talhao" checked onchange="toggleCamada('TALHAO')"><span class="legenda-cor" style="background:transparent; border:1px dashed #000;"></span> LIMITES TALHÃO</div>
         </div>
     </div>
 
     <div id="view-indicators" class="view">
         <div class="indicadores-container">
-            <div class="card" style="border-left: 5px solid #4CAF50;">
-                <div class="card-header"><h3>Aplicado Interno</h3><span class="valor"><span id="val-acerto">0.00</span> ha</span></div>
-                <span class="pct-label" id="pct-acerto">0%</span>
-                <div class="progress-container"><div class="progress-bar" id="bar-acerto" style="width: 0%; background-color: #4CAF50;"></div></div>
-            </div>
             
-            <div class="card" style="border-left: 5px solid #FF9800;">
-                <div class="card-header"><h3>Sobreposição</h3><span class="valor"><span id="val-sobreposicao">0.00</span> ha</span></div>
-                <span class="pct-label" id="pct-sobreposicao">0%</span>
-                <div class="progress-container"><div class="progress-bar" id="bar-sobreposicao" style="width: 0%; background-color: #FF9800;"></div></div>
+            <div class="cards-grid">
+                <div class="card" style="border-color: #006400;"><h3>Área Aplicada (ha)</h3><div class="valor" id="val-acerto">0.00</div></div>
+                <div class="card" style="border-color: #00008B;"><h3>Sobreposição (ha)</h3><div class="valor" id="val-sobreposicao">0.00</div></div>
+                <div class="card" style="border-color: #FFFF00;"><h3>Não Aplicado (ha)</h3><div class="valor" id="val-falha">0.00</div></div>
+                <div class="card" style="border-color: #FF0000;"><h3>Fora Talhão (ha)</h3><div class="valor" id="val-excedente">0.00</div></div>
+                <div class="card" style="grid-column: span 2; border-color: #333;"><h3>Área Referência Total (ha)</h3><div class="valor" id="val-total">0.00</div></div>
             </div>
 
-            <div class="card" style="border-left: 5px solid #E53935;">
-                <div class="card-header"><h3>Não Aplicado (Falha)</h3><span class="valor"><span id="val-falha">0.00</span> ha</span></div>
-                <span class="pct-label" id="pct-falha">0%</span>
-                <div class="progress-container"><div class="progress-bar" id="bar-falha" style="width: 0%; background-color: #E53935;"></div></div>
-            </div>
-
-            <div class="card" style="border-left: 5px solid #9C27B0;">
-                <div class="card-header"><h3>Excedente (Fora Talhão)</h3><span class="valor"><span id="val-excedente">0.00</span> ha</span></div>
-                <span class="pct-label" id="pct-excedente">0%</span>
-                <div class="progress-container"><div class="progress-bar" id="bar-excedente" style="width: 0%; background-color: #9C27B0;"></div></div>
-            </div>
-            
-            <div class="card" style="background-color: #f1f8e9; border: 1px solid #c5e1a5;">
-                <div class="card-header"><h3 style="color:#33691e;">Área Total de Referência</h3><span class="valor" style="color:#33691e;"><span id="val-total">0.00</span> ha</span></div>
+            <div class="charts-grid">
+                <div class="chart-box"><h4>% Acerto</h4><div class="chart-container"><canvas id="graf-acerto"></canvas></div></div>
+                <div class="chart-box"><h4>% Sobreposição</h4><div class="chart-container"><canvas id="graf-sobreposicao"></canvas></div></div>
+                <div class="chart-box"><h4>% Falha</h4><div class="chart-container"><canvas id="graf-falha"></canvas></div></div>
+                <div class="chart-box"><h4>% Excedente</h4><div class="chart-container"><canvas id="graf-excedente"></canvas></div></div>
             </div>
 
             <div class="tabela-container">
-                <h3 style="margin-top:0; color:#444; font-size: 14px;">Fazendas Processadas</h3>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Fazenda</th>
-                            <th>Data Voo</th>
-                            <th>Processamento</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-corpo">
-                        </tbody>
+                    <thead><tr><th>Fazenda</th><th>Data Voo</th><th>Processamento</th></tr></thead>
+                    <tbody id="tabela-corpo"></tbody>
                 </table>
             </div>
-            
-            <div class="footer-atualizacao" id="texto-rodape">Ultima atualização em: --</div>
+
+            <div class="footer-texto" id="rodape-data">Ultima atualização em: --</div>
         </div>
     </div>
 
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchView('mapa')">🗺️ MAPA</div>
-        <div class="nav-item" onclick="switchView('indicators')">📊 DASHBOARD BI</div>
+        <div class="nav-item" onclick="switchView('indicators')">📊 BI & DADOS</div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let map;
         let dadosCSV = [];
-        let geojsonFeaturesArmazenadas = [];
-        let ultimaDataProcessamento = "--";
+        let geojsonFeatures = [];
+        let graficos = {};
 
+        // Cores Sólidas (Sem Transparência) conforme solicitado
         const mapaCores = {
-            "APLICADO": "#4CAF50", "SOBREPOSIÇÃO": "#FF9800",
-            "APLICADO FORA DO TALHÃO": "#9C27B0", "NÃO APLICADO DENTRO DO TALHÃO": "#E53935"
+            "APLICADO": "#006400", // Verde Escuro
+            "SOBREPOSIÇÃO": "#00008B", // Azul Escuro
+            "NÃO APLICADO DENTRO DO TALHÃO": "#FFFF00", // Amarelo
+            "APLICADO FORA DO TALHÃO": "#FF0000" // Vermelho
         };
 
         let gruposCamadas = {
             "APLICADO": L.layerGroup(), "SOBREPOSIÇÃO": L.layerGroup(),
-            "APLICADO FORA DO TALHÃO": L.layerGroup(), "NÃO APLICADO DENTRO DO TALHÃO": L.layerGroup(),
-            "TALHAO": L.layerGroup()
+            "APLICADO FORA DO TALHÃO": L.layerGroup(), "NÃO APLICADO DENTRO DO TALHÃO": L.layerGroup(), "TALHAO": L.layerGroup()
         };
 
         function switchView(viewName) {
@@ -156,209 +153,175 @@
 
         function initMap() {
             map = L.map('mapa', { zoomControl: false }).setView([-21.5, -50.2], 12);
-            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-            }).addTo(map);
+            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] }).addTo(map);
             Object.values(gruposCamadas).forEach(g => g.addTo(map));
+            initGraficos();
         }
 
-        function toggleCamada(nomeClasse) {
-            const checkMap = {
-                'APLICADO': 'chk-aplicado', 'SOBREPOSIÇÃO': 'chk-sobreposicao',
-                'APLICADO FORA DO TALHÃO': 'chk-excedente', 'NÃO APLICADO DENTRO DO TALHÃO': 'chk-falha', 'TALHAO': 'chk-talhao'
-            };
-            if (document.getElementById(checkMap[nomeClasse]).checked) map.addLayer(gruposCamadas[nomeClasse]);
-            else map.removeLayer(gruposCamadas[nomeClasse]);
+        function initGraficos() {
+            const configPie = (cor) => ({
+                type: 'doughnut',
+                data: { datasets: [{ data: [0, 100], backgroundColor: [cor, '#e0e0e0'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', animation: false, plugins: { tooltip: { enabled: false } } }
+            });
+            graficos.acerto = new Chart(document.getElementById('graf-acerto'), configPie('#006400'));
+            graficos.sobreposicao = new Chart(document.getElementById('graf-sobreposicao'), configPie('#00008B'));
+            graficos.falha = new Chart(document.getElementById('graf-falha'), configPie('#FFFF00'));
+            graficos.excedente = new Chart(document.getElementById('graf-excedente'), configPie('#FF0000'));
         }
 
-        function carregarDadosIniciais() {
+        function toggleCamada(nome) {
+            let idChk = {'APLICADO':'chk-aplicado', 'SOBREPOSIÇÃO':'chk-sobreposicao', 'APLICADO FORA DO TALHÃO':'chk-excedente', 'NÃO APLICADO DENTRO DO TALHÃO':'chk-falha', 'TALHAO':'chk-talhao'}[nome];
+            document.getElementById(idChk).checked ? map.addLayer(gruposCamadas[nome]) : map.removeLayer(gruposCamadas[nome]);
+        }
+
+        function carregarDados() {
             fetch('./dados/lista.json').then(r => r.json()).then(lista => {
                 let promessas = [];
-                lista.forEach(nomeBase => {
-                    let pGeo = fetch(`./dados/${nomeBase}.geojson`).then(r => r.json()).then(geo => {
-                        geojsonFeaturesArmazenadas.push({ id: nomeBase, dados: geo });
-                    });
-                    
-                    let pCsv = new Promise((resolve) => {
-                        Papa.parse(`./dados/${nomeBase}.csv`, {
-                            download: true, header: true, delimiter: ";", skipEmptyLines: true,
-                            complete: function(res) {
-                                res.data.forEach(item => {
-                                    if(item.FAZENDA_COD) {
-                                        // Extrai Mês e Ano da Data de Início (formato dd-mm-yyyy)
-                                        if(item.DATA_INICIO) {
-                                            let partes = item.DATA_INICIO.split('-');
-                                            if(partes.length === 3) {
-                                                item.ANO = partes[2];
-                                                item.MES = partes[1];
-                                            }
-                                        }
-                                        item._origem_id = nomeBase;
-                                        dadosCSV.push(item);
-                                        
-                                        // Captura a data de processamento mais recente (Gambiarra funcional)
-                                        if(item.DATA_PROCESSAMENTO) ultimaDataProcessamento = item.DATA_PROCESSAMENTO;
+                lista.forEach(id => {
+                    promessas.push(fetch(`./dados/${id}.geojson`).then(r => r.json()).then(g => geojsonFeatures.push({id, dados: g})));
+                    promessas.push(new Promise(res => {
+                        Papa.parse(`./dados/${id}.csv`, { download: true, header: true, delimiter: ";", skipEmptyLines: true, complete: function(c) {
+                            c.data.forEach(item => {
+                                if(item.FAZENDA_COD) {
+                                    item._id = id;
+                                    // Quebra a data para os filtros
+                                    if(item.DATA_INICIO) {
+                                        let p = item.DATA_INICIO.split('-');
+                                        if(p.length === 3) { item._ano = p[2]; item._mes = p[1]; item._dia = p[0]; }
                                     }
-                                });
-                                resolve();
-                            },
-                            error: function() { resolve(); }
-                        });
-                    });
-                    promessas.push(pGeo, pCsv);
+                                    dadosCSV.push(item);
+                                }
+                            }); res();
+                        }});
+                    }));
                 });
-
-                Promise.all(promessas).then(() => {
-                    document.getElementById('texto-rodape').innerText = "Ultima atualização em: " + ultimaDataProcessamento;
-                    popularFiltrosCascata();
-                    renderizarDashboardEMapa();
-                });
+                Promise.all(promessas).then(() => { atualizarFiltrosCascata('init'); });
             });
         }
 
-        function popularFiltrosCascata() {
-            const anos = [...new Set(dadosCSV.map(i => i.ANO))].filter(Boolean).sort();
-            const meses = [...new Set(dadosCSV.map(i => i.MES))].filter(Boolean).sort();
-            const datas = [...new Set(dadosCSV.map(i => i.DATA_INICIO))].filter(Boolean).sort();
-            
-            // Popula Ano
-            const cbAno = document.getElementById('filtro-ano');
-            anos.forEach(a => cbAno.add(new Option(a, a)));
-            
-            // Popula Mes
-            const cbMes = document.getElementById('filtro-mes');
-            meses.forEach(m => cbMes.add(new Option(m, m)));
-            
-            // Popula Data
-            const cbData = document.getElementById('filtro-data');
-            datas.forEach(d => cbData.add(new Option(d, d)));
-            
-            // Popula Fazenda Combinada
-            const cbFaz = document.getElementById('filtro-fazenda');
-            let fazendasUnicas = [...new Set(dadosCSV.map(i => `${i.FAZENDA_COD} - ${i.FAZENDA_NOME}`))];
-            fazendasUnicas.forEach(f => cbFaz.add(new Option(f, f)));
-
-            // Event Listeners
-            ['filtro-ano', 'filtro-mes', 'filtro-data', 'filtro-fazenda'].forEach(id => {
-                document.getElementById(id).addEventListener('change', renderizarDashboardEMapa);
-            });
+        function getFiltrosAtuais() {
+            return { ano: document.getElementById('f-ano').value, mes: document.getElementById('f-mes').value, data: document.getElementById('f-data').value };
         }
 
-        function renderizarDashboardEMapa() {
-            const anoSel = document.getElementById('filtro-ano').value;
-            const mesSel = document.getElementById('filtro-mes').value;
-            const dataSel = document.getElementById('filtro-data').value;
-            const fazSel = document.getElementById('filtro-fazenda').value;
+        function atualizarFiltrosCascata(origem) {
+            let fa = getFiltrosAtuais();
+            let ds = dadosCSV;
 
-            // 1. FILTRAGEM DOS DADOS
-            let dadosFiltrados = dadosCSV.filter(row => {
-                let passaAno = (anoSel === 'TODOS' || row.ANO === anoSel);
-                let passaMes = (mesSel === 'TODOS' || row.MES === mesSel);
-                let passaData = (dataSel === 'TODOS' || row.DATA_INICIO === dataSel);
-                let passaFaz = (fazSel === 'TODOS' || `${row.FAZENDA_COD} - ${row.FAZENDA_NOME}` === fazSel);
-                return passaAno && passaMes && passaData && passaFaz;
-            });
-
-            // 2. AGREGAÇÃO PARA OS CARDS BI
-            let somaAcerto = 0, somaSobre = 0, somaExcedente = 0, somaFalha = 0, somaTotal = 0;
-            
-            dadosFiltrados.forEach(row => {
-                somaAcerto += parseFloat(row.AREA_APLICADA_INTERNA_HA) || 0;
-                somaSobre += parseFloat(row.AREA_SOBREPOSTA_HA) || 0;
-                somaExcedente += parseFloat(row.AREA_FORA_TALHAO_HA) || 0;
-                somaFalha += parseFloat(row.AREA_NAO_APLICADA_HA) || 0;
-                somaTotal += parseFloat(row.AREA_REF_TOTAL_HA) || 0;
-            });
-
-            // Atualiza Textos
-            document.getElementById('val-acerto').innerText = somaAcerto.toFixed(2);
-            document.getElementById('val-sobreposicao').innerText = somaSobre.toFixed(2);
-            document.getElementById('val-excedente').innerText = somaExcedente.toFixed(2);
-            document.getElementById('val-falha').innerText = somaFalha.toFixed(2);
-            document.getElementById('val-total').innerText = somaTotal.toFixed(2);
-
-            // Atualiza Barras de Progresso (Cálculo de Porcentagem)
-            let baseProgresso = somaTotal > 0 ? somaTotal : 1; 
-            let baseAplicado = (somaAcerto + somaSobre + somaExcedente) > 0 ? (somaAcerto + somaSobre + somaExcedente) : 1;
-
-            let pctAcerto = ((somaAcerto / baseAplicado) * 100).toFixed(1);
-            let pctSobre = ((somaSobre / baseAplicado) * 100).toFixed(1);
-            let pctExcedente = ((somaExcedente / baseAplicado) * 100).toFixed(1);
-            let pctFalha = ((somaFalha / baseProgresso) * 100).toFixed(1);
-
-            document.getElementById('bar-acerto').style.width = `${pctAcerto}%`;
-            document.getElementById('pct-acerto').innerText = `${pctAcerto}%`;
-            
-            document.getElementById('bar-sobreposicao').style.width = `${pctSobre}%`;
-            document.getElementById('pct-sobreposicao').innerText = `${pctSobre}%`;
-            
-            document.getElementById('bar-excedente').style.width = `${pctExcedente}%`;
-            document.getElementById('pct-excedente').innerText = `${pctExcedente}%`;
-            
-            document.getElementById('bar-falha').style.width = `${pctFalha}%`;
-            document.getElementById('pct-falha').innerText = `${pctFalha}%`;
-
-            // 3. PREENCHER TABELA
-            const tbody = document.getElementById('tabela-corpo');
-            tbody.innerHTML = '';
-            
-            // Pega apenas registros únicos para a tabela baseados no _origem_id
-            let voosUnicos = [...new Map(dadosFiltrados.map(item => [item._origem_id, item])).values()];
-            
-            voosUnicos.forEach(row => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `<td>${row.FAZENDA_COD} - ${row.FAZENDA_NOME}</td><td>${row.DATA_INICIO}</td><td>${row.DATA_PROCESSAMENTO || '--'}</td>`;
-                tbody.appendChild(tr);
-            });
-
-            if(voosUnicos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Nenhum dado encontrado para este filtro.</td></tr>';
+            if(origem === 'init') {
+                let anos = [...new Set(ds.map(d => d._ano))].filter(Boolean).sort();
+                popSelect('f-ano', anos, 'Todos');
             }
+            fa = getFiltrosAtuais();
+            if(fa.ano !== 'TODOS') ds = ds.filter(d => d._ano === fa.ano);
+            
+            if(origem === 'init' || origem === 'ano') {
+                let meses = [...new Set(ds.map(d => d._mes))].filter(Boolean).sort();
+                popSelect('f-mes', meses, 'Todos');
+            }
+            fa = getFiltrosAtuais();
+            if(fa.mes !== 'TODOS') ds = ds.filter(d => d._mes === fa.mes);
 
-            // 4. ATUALIZAR MAPA COM ZOOM DINÂMICO
+            if(origem === 'init' || origem === 'ano' || origem === 'mes') {
+                let datas = [...new Set(ds.map(d => d.DATA_INICIO))].filter(Boolean).sort();
+                popSelect('f-data', datas, 'Todas');
+            }
+            fa = getFiltrosAtuais();
+            if(fa.data !== 'TODOS') ds = ds.filter(d => d.DATA_INICIO === fa.data);
+
+            // Popula Area (Visão Específica)
+            let comboArea = document.getElementById('f-area');
+            comboArea.innerHTML = '<option value="TUDO">VER TUDO (Consolidado)</option>';
+            ds.forEach(r => comboArea.add(new Option(`${r.FAZENDA_COD} - ${r.FAZENDA_NOME} (${r.DATA_INICIO})`, r._id)));
+
+            renderizarPainel();
+        }
+
+        function popSelect(id, array, textTudo) {
+            let sel = document.getElementById(id);
+            let valAtual = sel.value;
+            sel.innerHTML = `<option value="TODOS">${textTudo}</option>`;
+            array.forEach(i => sel.add(new Option(i, i)));
+            if(array.includes(valAtual)) sel.value = valAtual;
+        }
+
+        function renderizarPainel() {
+            let idAlvo = document.getElementById('f-area').value;
+            let fa = getFiltrosAtuais();
+            
+            // Filtra os dados baseados na hierarquia
+            let dadosFiltrados = dadosCSV.filter(d => {
+                let matchTempo = (fa.ano === 'TODOS' || d._ano === fa.ano) && (fa.mes === 'TODOS' || d._mes === fa.mes) && (fa.data === 'TODOS' || d.DATA_INICIO === fa.data);
+                let matchId = (idAlvo === 'TUDO' || d._id === idAlvo);
+                return matchTempo && matchId;
+            });
+
+            // Somatórios
+            let sums = { a:0, s:0, f:0, e:0, t:0 };
+            dadosFiltrados.forEach(r => {
+                sums.a += parseFloat(r.AREA_APLICADA_INTERNA_HA)||0; sums.s += parseFloat(r.AREA_SOBREPOSTA_HA)||0;
+                sums.f += parseFloat(r.AREA_NAO_APLICADA_HA)||0; sums.e += parseFloat(r.AREA_FORA_TALHAO_HA)||0;
+                sums.t += parseFloat(r.AREA_REF_TOTAL_HA)||0;
+            });
+
+            document.getElementById('val-acerto').innerText = sums.a.toFixed(2);
+            document.getElementById('val-sobreposicao').innerText = sums.s.toFixed(2);
+            document.getElementById('val-falha').innerText = sums.f.toFixed(2);
+            document.getElementById('val-excedente').innerText = sums.e.toFixed(2);
+            document.getElementById('val-total').innerText = sums.t.toFixed(2);
+
+            // Atualiza Gráficos (Porcentagem baseada no Total Aplicado para os relativos, e Area Ref para Falha)
+            let totalAplicado = sums.a + sums.s + sums.e; // Logica padrão de aplicação
+            let pctA = totalAplicado ? (sums.a/sums.t)*100 : 0;
+            let pctS = totalAplicado ? (sums.s/sums.t)*100 : 0;
+            let pctF = sums.t ? (sums.f/sums.t)*100 : 0;
+            let pctE = totalAplicado ? (sums.e/sums.t)*100 : 0; // Aproximação visual
+
+            graficos.acerto.data.datasets[0].data = [pctA, 100-pctA]; graficos.acerto.update();
+            graficos.sobreposicao.data.datasets[0].data = [pctS, 100-pctS]; graficos.sobreposicao.update();
+            graficos.falha.data.datasets[0].data = [pctF, 100-pctF]; graficos.falha.update();
+            graficos.excedente.data.datasets[0].data = [pctE, 100-pctE]; graficos.excedente.update();
+
+            // Atualiza Tabela e Rodapé
+            let htmlTab = '';
+            let ultimaDataProc = '--';
+            dadosFiltrados.forEach(r => {
+                htmlTab += `<tr><td>${r.FAZENDA_NOME}</td><td>${r.DATA_INICIO}</td><td>${r.DATA_PROCESSAMENTO || '--'}</td></tr>`;
+                if(r.DATA_PROCESSAMENTO) ultimaDataProc = r.DATA_PROCESSAMENTO;
+            });
+            document.getElementById('tabela-corpo').innerHTML = htmlTab;
+            document.getElementById('rodape-data').innerText = "Ultima atualização em: " + ultimaDataProc;
+
+            // RENDERIZAÇÃO DO MAPA (Sólido, Opacidade 1)
             Object.values(gruposCamadas).forEach(g => g.clearLayers());
             let boundsGeral = L.featureGroup();
-
-            let idsFiltrados = voosUnicos.map(v => v._origem_id);
             
-            idsFiltrados.forEach(alvoId => {
-                let pacoteGeo = geojsonFeaturesArmazenadas.find(g => g.id === alvoId);
-                if (pacoteGeo) {
-                    L.geoJSON(pacoteGeo.dados, {
-                        style: function(feature) {
-                            let tipo = feature.properties.TIPO_GEO;
-                            if (tipo === "TALHAO") return { color: "#000000", weight: 2, fillOpacity: 0 };
-                            let cls = feature.properties.CLASSE;
-                            let cor = mapaCores[cls] || "#999";
-                            return { color: cor, weight: 0.5, fillColor: cor, fillOpacity: 0.55 };
-                        },
-                        onEachFeature: function(feature, layer) {
-                            let tipo = feature.properties.TIPO_GEO;
-                            if (tipo === "TALHAO") {
-                                if (feature.properties.TALHAO) {
-                                    layer.bindTooltip(String(parseInt(feature.properties.TALHAO)), {
-                                        permanent: true, direction: 'center', className: 'rotulo-talhao'
-                                    });
-                                }
-                                layer.addTo(gruposCamadas["TALHAO"]);
-                            } else {
-                                let cls = feature.properties.CLASSE;
-                                if (gruposCamadas[cls]) layer.addTo(gruposCamadas[cls]);
-                            }
-                            layer.addTo(boundsGeral);
+            let idsParaPlotar = idAlvo === 'TUDO' ? dadosFiltrados.map(d => d._id) : [idAlvo];
+            
+            geojsonFeatures.filter(g => idsParaPlotar.includes(g.id)).forEach(pacote => {
+                L.geoJSON(pacote.dados, {
+                    style: f => {
+                        if (f.properties.TIPO_GEO === "TALHAO") return { color: "#000", weight: 2, fillOpacity: 0 };
+                        let cor = mapaCores[f.properties.CLASSE] || "#999";
+                        return { color: cor, weight: 1, fillColor: cor, fillOpacity: 1.0 }; // OPACIDADE TOTAL AQUI
+                    },
+                    onEachFeature: (f, layer) => {
+                        let tipo = f.properties.TIPO_GEO;
+                        if (tipo === "TALHAO") {
+                            if (f.properties.TALHAO) layer.bindTooltip(String(parseInt(f.properties.TALHAO)), { permanent: true, direction: 'center', className: 'rotulo-talhao' });
+                            layer.addTo(gruposCamadas["TALHAO"]);
+                        } else {
+                            if (gruposCamadas[f.properties.CLASSE]) layer.addTo(gruposCamadas[f.properties.CLASSE]);
                         }
-                    });
-                }
+                        layer.addTo(boundsGeral);
+                    }
+                });
             });
 
-            // Enquadrar na tela a fazenda ou o conjunto filtrado
-            if(boundsGeral.getLayers().length > 0) {
-                map.flyToBounds(boundsGeral.getBounds(), { padding: [20, 20], duration: 0.5 });
-            }
+            if(boundsGeral.getLayers().length > 0) map.fitBounds(boundsGeral.getBounds());
         }
 
-        initMap();
-        carregarDadosIniciais();
+        initMap(); carregarDados();
     </script>
 </body>
 </html>
