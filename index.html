@@ -8,18 +8,35 @@
     <style>
         :root { --primary: #2e7d32; --bg: #f5f5f5; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: var(--bg); overflow: hidden; }
-        .header { position: absolute; top: 0; left: 0; right: 0; background: white; padding: 10px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; gap: 10px; }
+        
+        /* Cabeçalho inspirado na imagem */
+        .header { position: absolute; top: 0; left: 0; right: 0; background: white; padding: 10px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0 0 10px 0; font-size: 16px; color: #333; text-align: center; }
+        .filter-container { display: flex; gap: 10px; }
         select { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; }
-        .view { position: absolute; top: 55px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
+        
+        /* Telas */
+        .view { position: absolute; top: 75px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
         .view.active { display: block; }
         #mapa { height: 100%; width: 100%; }
+        
+        /* Indicadores */
         .indicadores-container { padding: 15px; }
         .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 5px solid var(--primary); }
         .card h3 { margin: 0 0 10px 0; font-size: 14px; color: #555; }
         .card .valor { font-size: 24px; font-weight: bold; color: #222; }
-        .card.acerto { border-left-color: #4caf50; }
-        .card.sobreposicao { border-left-color: #ff9800; }
-        .card.falha { border-left-color: #f44336; }
+        
+        /* Cores específicas baseadas na imagem */
+        .card.acerto { border-left-color: #4caf50; } /* Verde - Área Aplicada */
+        .card.sobreposicao { border-left-color: #ff9800; } /* Laranja */
+        .card.falha { border-left-color: #f44336; } /* Vermelho */
+        .card.risco { border-left-color: #8a2be2; } /* Violeta - Área de Risco */
+        
+        /* Legenda Leaflet */
+        .legend { padding: 6px 8px; font: 12px/14px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; line-height: 18px; color: #333; }
+        .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }
+        
+        /* Navegação Inferior */
         .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: white; display: flex; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 1000; }
         .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #777; cursor: pointer; transition: 0.3s; }
         .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); background: #f9f9f9; }
@@ -27,28 +44,43 @@
 </head>
 <body>
     <div class="header">
-        <select id="filtro-fazenda"><option value="TODAS">Todas as Fazendas</option></select>
-        <select id="filtro-data"><option value="TODAS">Todas as Datas</option></select>
+        <h1>AVIAÇÃO AGRÍCOLA - PAINEL DE QUALIDADE</h1>
+        <div class="filter-container">
+            <select id="filtro-combinado"><option value="TODAS">Todos os Voos</option></select>
+        </div>
     </div>
+    
     <div id="view-mapa" class="view active"><div id="mapa"></div></div>
+    
     <div id="view-indicadores" class="view">
         <div class="indicadores-container">
-            <div class="card acerto"><h3>Área Aplicada Interna (ha)</h3><div class="valor" id="val-acerto">0.00</div></div>
+            <div class="card acerto"><h3>Área Aplicada Interna (Acerto) (ha)</h3><div class="valor" id="val-acerto">0.00</div></div>
             <div class="card sobreposicao"><h3>Área Sobreposta (ha)</h3><div class="valor" id="val-sobreposicao">0.00</div></div>
             <div class="card falha"><h3>Área Não Aplicada / Falha (ha)</h3><div class="valor" id="val-falha">0.00</div></div>
+            <div class="card risco"><h3>Área de Risco (ha)</h3><div class="valor">0.00</div></div>
             <div class="card"><h3>Área Total de Referência (ha)</h3><div class="valor" id="val-total">0.00</div></div>
         </div>
     </div>
+    
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchView('mapa')">🗺️ MAPA</div>
         <div class="nav-item" onclick="switchView('indicadores')">📊 INDICADORES</div>
     </div>
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script>
         let map;
         let geojsonLayer = L.featureGroup();
         let dadosCSV = [];
+        
+        // Cores baseadas na imagem para o mapa
+        const cores_mapa = {
+            "Acerto": "#4caf50",       // Verde
+            "Sobreposição": "#ff9800", // Laranja
+            "Falha": "#f44336",         // Vermelho
+            "Risco": "#8a2be2"         // Violeta
+        };
 
         function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -64,6 +96,33 @@
                 maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: 'Google Satellite'
             }).addTo(map);
             geojsonLayer.addTo(map);
+            
+            // Adicionar legenda inspirada na imagem
+            criarLegenda();
+        }
+        
+        function estiloGeojson(feature) {
+            // O algoritmo do usuário DEVE gerar a propriedade "status"
+            let status = feature.properties.status || "Padrão";
+            let cor = cores_mapa[status] || "#00ff00"; // Verde padrão se não houver status
+            return {color: cor, weight: 2, fillOpacity: 0.3};
+        }
+        
+        function criarLegenda() {
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function (map) {
+                const div = L.DomUtil.create('div', 'info legend');
+                const labels = [];
+                // As chaves da legenda devem corresponder às cores usadas nos polígonos
+                for (const status in cores_mapa) {
+                    labels.push(
+                        '<i style="background:' + cores_mapa[status] + '"></i> ' + status
+                    );
+                }
+                div.innerHTML = labels.join('<br>');
+                return div;
+            };
+            legend.addTo(map);
         }
 
         function carregarTudo() {
@@ -72,11 +131,13 @@
                 .then(lista => {
                     let promessasCSV = [];
                     lista.forEach(nomeBase => {
+                        // Carregar GeoJSON com estilo
                         fetch(`./dados/${nomeBase}.geojson`).then(r => r.json()).then(data => {
-                            L.geoJSON(data, { style: {color: "#00ff00", weight: 2, fillOpacity: 0.2} }).addTo(geojsonLayer);
+                            L.geoJSON(data, { style: estiloGeojson }).addTo(geojsonLayer);
                             map.fitBounds(geojsonLayer.getBounds());
                         }).catch(e => console.log("Ops, erro no mapa:", nomeBase));
 
+                        // Carregar CSV
                         let p = new Promise((resolve) => {
                             Papa.parse(`./dados/${nomeBase}.csv`, {
                                 download: true, header: true, delimiter: ";", skipEmptyLines: true,
@@ -95,28 +156,31 @@
         }
 
         function popularFiltros() {
-            const fazendas = [...new Set(dadosCSV.map(item => item.FAZENDA_NOME))].filter(Boolean);
-            const datas = [...new Set(dadosCSV.map(item => item.DATA_INICIO))].filter(Boolean);
-            const comboFazenda = document.getElementById('filtro-fazenda');
-            const comboData = document.getElementById('filtro-data');
+            // Criar a string combinada "FAZENDA_NOME | DATA_INICIO"
+            const combinacoes = [...new Set(dadosCSV.map(item => `${item.FAZENDA_NOME} | ${item.DATA_INICIO}`))].filter(Boolean);
+            const comboCombinado = document.getElementById('filtro-combinado');
             
-            comboFazenda.innerHTML = '<option value="TODAS">Todas as Fazendas</option>';
-            comboData.innerHTML = '<option value="TODAS">Todas as Datas</option>';
+            comboCombinado.innerHTML = '<option value="TODAS">Todos os Voos</option>';
             
-            fazendas.forEach(f => comboFazenda.add(new Option(f, f)));
-            datas.forEach(d => comboData.add(new Option(d, d)));
+            combinacoes.forEach(c => comboCombinado.add(new Option(c, c)));
             
-            comboFazenda.addEventListener('change', atualizarPainel);
-            comboData.addEventListener('change', atualizarPainel);
+            comboCombinado.addEventListener('change', atualizarPainel);
         }
 
         function atualizarPainel() {
-            const fazendaSel = document.getElementById('filtro-fazenda').value;
-            const dataSel = document.getElementById('filtro-data').value;
-            let f = dadosCSV.filter(row => {
-                return (fazendaSel === 'TODAS' || row.FAZENDA_NOME === fazendaSel) &&
-                       (dataSel === 'TODAS' || row.DATA_INICIO === dataSel);
-            });
+            const filtroCombinadoSel = document.getElementById('filtro-combinado').value;
+            
+            let f;
+            if (filtroCombinadoSel === 'TODAS') {
+                f = dadosCSV;
+            } else {
+                // Parsear a string combinada para filtrar por ambas as colunas
+                const [fazenda_nome_sel, data_inicio_sel] = filtroCombinadoSel.split(' | ');
+                f = dadosCSV.filter(row => {
+                    return row.FAZENDA_NOME === fazenda_nome_sel && row.DATA_INICIO === data_inicio_sel;
+                });
+            }
+            
             let a = 0, s = 0, fl = 0, t = 0;
             f.forEach(row => {
                 a += parseFloat(row.AREA_APLICADA_INTERNA_HA) || 0;
