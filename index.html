@@ -6,7 +6,7 @@
     <title>Painel BI - Qualidade Aérea</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --primary: #006400; --bg: #eef2f5; }
+        :root { --primary: #333; --bg: #eef2f5; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); overflow: hidden; }
         
         /* Cabeçalho e Filtros BI */
@@ -15,23 +15,26 @@
         .filtro-grupo label { font-size: 10px; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 2px; }
         select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; color: #333; background: #f9f9f9; }
         
-        /* Views */
-        .view { position: absolute; top: 90px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
+        /* Views - O SEGREDO DO SUCESSO AQUI: top alterado para 145px para não engolir o layout */
+        .view { position: absolute; top: 145px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
         .view.active { display: block; }
         #mapa { height: 100%; width: 100%; }
         
-        /* Layout Indicadores BI */
+        /* Layout Indicadores Estilo Safadamente Idêntico */
         .indicadores-container { padding: 15px; }
-        .cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid var(--primary); }
-        .card h3 { margin: 0 0 5px 0; font-size: 11px; color: #777; text-transform: uppercase; }
-        .card .valor { font-size: 20px; font-weight: bold; color: #222; }
         
-        /* Gráficos Chart.js - CÓPIA SAFADAMENTE IDÊNTICA AO PDF */
-        .charts-row { display: flex; justify-content: space-between; align-items: flex-start; background: white; padding: 15px 5px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; overflow-x: auto; gap: 5px; }
-        .chart-box { flex: 1; min-width: 65px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .chart-container { position: relative; height: 60px; width: 60px; margin-bottom: 8px; }
-        .chart-label { font-size: 9px; font-weight: bold; color: #555; text-transform: uppercase; line-height: 1.2; word-wrap: break-word; max-width: 100%; }
+        .bi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        @media (min-width: 600px) { .bi-grid { grid-template-columns: repeat(4, 1fr); } }
+        
+        .bi-item { background: white; padding: 15px 5px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+        .bi-titulo { font-size: 12px; font-weight: bold; color: #555; text-transform: uppercase; text-align: center; min-height: 28px; line-height: 1.2; margin-bottom: 10px; }
+        
+        /* Gráficos Maiores (Aumentado de 90px para 120px) */
+        .chart-container { position: relative; height: 120px; width: 120px; margin: 0 auto; }
+        
+        .bi-valor { font-size: 15px; font-weight: bold; color: #222; margin-top: 12px; background: #f4f4f4; padding: 4px 10px; border-radius: 4px; }
+        
+        .bi-resumo { background: white; padding: 12px; text-align: center; border-radius: 8px; font-size: 14px; color: #444; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #333; }
         
         /* Tabela de Fazendas */
         .tabela-container { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 20px; }
@@ -90,35 +93,31 @@
     <div id="view-indicators" class="view">
         <div class="indicadores-container">
             
-            <div class="cards-grid">
-                <div class="card" style="border-color: #006400;"><h3>Área Aplicada (ha)</h3><div class="valor" id="val-acerto">0.00</div></div>
-                <div class="card" style="border-color: #00008B;"><h3>Sobreposição (ha)</h3><div class="valor" id="val-sobreposicao">0.00</div></div>
-                <div class="card" style="border-color: #FFFF00;"><h3>Não Aplicado (ha)</h3><div class="valor" id="val-falha">0.00</div></div>
-                <div class="card" style="border-color: #FF0000;"><h3>Fora Talhão (ha)</h3><div class="valor" id="val-excedente">0.00</div></div>
-                <div class="card" style="grid-column: span 2; border-color: #333;"><h3>Área Referência Total (ha)</h3><div class="valor" id="val-total">0.00</div></div>
+            <div class="bi-grid">
+                <div class="bi-item" style="border-bottom: 4px solid #006400;">
+                    <div class="bi-titulo">Aplicado Interno</div>
+                    <div class="chart-container"><canvas id="graf-acerto"></canvas></div>
+                    <div class="bi-valor"><span id="val-acerto">0.00</span> ha</div>
+                </div>
+                <div class="bi-item" style="border-bottom: 4px solid #00008B;">
+                    <div class="bi-titulo">Sobreposição</div>
+                    <div class="chart-container"><canvas id="graf-sobreposicao"></canvas></div>
+                    <div class="bi-valor"><span id="val-sobreposicao">0.00</span> ha</div>
+                </div>
+                <div class="bi-item" style="border-bottom: 4px solid #FFFF00;">
+                    <div class="bi-titulo">Não Aplicado</div>
+                    <div class="chart-container"><canvas id="graf-falha"></canvas></div>
+                    <div class="bi-valor"><span id="val-falha">0.00</span> ha</div>
+                </div>
+                <div class="bi-item" style="border-bottom: 4px solid #FF0000;">
+                    <div class="bi-titulo">Excedente</div>
+                    <div class="chart-container"><canvas id="graf-excedente"></canvas></div>
+                    <div class="bi-valor"><span id="val-excedente">0.00</span> ha</div>
+                </div>
             </div>
 
-            <div class="charts-row">
-                <div class="chart-box">
-                    <div class="chart-container"><canvas id="graf-acerto"></canvas></div>
-                    <div class="chart-label">Aplicado<br>Interno</div>
-                </div>
-                <div class="chart-box">
-                    <div class="chart-container"><canvas id="graf-sobreposicao"></canvas></div>
-                    <div class="chart-label">Sobreposição</div>
-                </div>
-                <div class="chart-box">
-                    <div class="chart-container"><canvas id="graf-falha"></canvas></div>
-                    <div class="chart-label">Não<br>Aplicado</div>
-                </div>
-                <div class="chart-box">
-                    <div class="chart-container"><canvas id="graf-excedente"></canvas></div>
-                    <div class="chart-label">Excedente</div>
-                </div>
-                <div class="chart-box">
-                    <div class="chart-container"><canvas id="graf-total"></canvas></div>
-                    <div class="chart-label">Total<br>Aplicado</div>
-                </div>
+            <div class="bi-resumo">
+                Área de Referência Total (Talhão): <b id="val-total" style="font-size: 16px;">0.00</b> ha
             </div>
 
             <div class="tabela-container">
@@ -158,23 +157,22 @@
             "APLICADO FORA DO TALHÃO": L.layerGroup(), "NÃO APLICADO DENTRO DO TALHÃO": L.layerGroup(), "TALHAO": L.layerGroup()
         };
 
-        // PLUGIN APRIMORADO: FONTE AJUSTADA PARA CABER NA ROSCA PEQUENA
         const centerTextPlugin = {
             id: 'centerText',
             beforeDraw: function(chart) {
                 if (chart.config.type !== 'doughnut') return;
                 let width = chart.width, height = chart.height, ctx = chart.ctx;
                 ctx.restore();
-                ctx.font = "bold 11px 'Segoe UI', sans-serif"; // Fonte cravada
+                
+                // Ajuste proporcional da fonte para o novo tamanho de 120px
+                let fontSize = (height / 100).toFixed(2);
+                ctx.font = "bold " + fontSize + "em 'Segoe UI', sans-serif";
                 ctx.textBaseline = "middle";
-                ctx.fillStyle = "#111"; // Preto forte pra destacar na tela
+                ctx.fillStyle = "#333";
                 
                 let val = chart.data.datasets[0].data[0] || 0;
-                let text = val.toFixed(1) + "%";
-                // Ajuste se for o total
-                if(chart.canvas.id === 'graf-total') text = "100%";
-
-                let textX = Math.round((width - ctx.measureText(text).width) / 2),
+                let text = val.toFixed(1) + "%",
+                    textX = Math.round((width - ctx.measureText(text).width) / 2),
                     textY = height / 2;
                 
                 ctx.fillText(text, textX, textY);
@@ -202,13 +200,12 @@
             const configPie = (cor) => ({
                 type: 'doughnut',
                 data: { datasets: [{ data: [0, 100], backgroundColor: [cor, '#e0e0e0'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: false, plugins: { tooltip: { enabled: false } } }
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', animation: false, plugins: { tooltip: { enabled: false } } }
             });
             graficos.acerto = new Chart(document.getElementById('graf-acerto'), configPie('#006400'));
             graficos.sobreposicao = new Chart(document.getElementById('graf-sobreposicao'), configPie('#00008B'));
             graficos.falha = new Chart(document.getElementById('graf-falha'), configPie('#FFFF00'));
             graficos.excedente = new Chart(document.getElementById('graf-excedente'), configPie('#FF0000'));
-            graficos.total = new Chart(document.getElementById('graf-total'), configPie('#444444')); // Gráfico cinza escuro para os 100%
         }
 
         function toggleCamada(nome) {
@@ -307,7 +304,7 @@
             document.getElementById('val-excedente').innerText = sums.e.toFixed(2);
             document.getElementById('val-total').innerText = sums.t.toFixed(2);
 
-            let areaReferenciaTotal = sums.t > 0 ? sums.t : 1;
+            let areaReferenciaTotal = sums.t > 0 ? sums.t : 1; 
 
             let pctA = (sums.a / areaReferenciaTotal) * 100;
             let pctS = (sums.s / areaReferenciaTotal) * 100;
@@ -318,7 +315,6 @@
             graficos.sobreposicao.data.datasets[0].data = [pctS, 100 - pctS > 0 ? 100 - pctS : 0]; graficos.sobreposicao.update();
             graficos.falha.data.datasets[0].data = [pctF, 100 - pctF > 0 ? 100 - pctF : 0]; graficos.falha.update();
             graficos.excedente.data.datasets[0].data = [pctE, 100 - pctE > 0 ? 100 - pctE : 0]; graficos.excedente.update();
-            graficos.total.data.datasets[0].data = [100, 0]; graficos.total.update(); // O total sempre finge que está preenchido
 
             let htmlTab = '';
             let ultimaDataProc = '--';
