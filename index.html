@@ -20,14 +20,18 @@
         .login-box .erro-msg { color: red; font-size: 12px; display: none; margin-bottom: 10px; font-weight: bold; }
         .login-footer { margin-top: 25px; font-size: 10px; color: #888; font-family: 'Courier New', Courier, monospace; letter-spacing: 0.5px; }
         
-        /* O conteúdo do App fica escondido até o login passar */
         #app-content { display: none; height: 100%; width: 100%; }
         
         /* Cabeçalho e Filtros BI */
         .header { position: absolute; top: 0; left: 0; right: 0; background: white; padding: 10px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; gap: 8px; }
         .filtro-grupo { flex: 1; min-width: 80px; display: flex; flex-direction: column; }
         .filtro-grupo label { font-size: 10px; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 2px; }
-        select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; color: #333; background: #f9f9f9; }
+        
+        /* Alinhamento para o select e o botão PDF lado a lado */
+        .select-container { display: flex; gap: 5px; width: 100%; }
+        .select-container select { flex: 1; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; color: #333; background: #f9f9f9; }
+        .btn-pdf { background: #d32f2f; color: white; border: none; border-radius: 4px; padding: 0 12px; font-weight: bold; font-size: 12px; text-decoration: none; display: none; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.3s; }
+        .btn-pdf:hover { background: #b71c1c; }
         
         /* Views */
         .view { position: absolute; top: 145px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
@@ -44,23 +48,21 @@
         .bi-valor { font-size: 15px; font-weight: bold; color: #222; margin-top: 12px; background: #f4f4f4; padding: 4px 10px; border-radius: 4px; }
         .bi-resumo { background: white; padding: 12px; text-align: center; border-radius: 8px; font-size: 14px; color: #444; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #333; }
         
-        /* Tabela com Scroll Horizontal para Caber Tudo */
+        /* Tabela Turbo */
         .tabela-container { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
         th { background: #f0f0f0; padding: 10px; text-align: left; color: #444; border-bottom: 2px solid #ddd; }
         td { padding: 10px; border-top: 1px solid #eee; color: #555; }
         
-        /* Footer Courier New */
         .footer-texto { font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #666; text-align: center; padding: 10px; margin-bottom: 20px; }
         
-        /* Legenda Flutuante Mapa */
+        /* Legenda */
         .legenda-mapa { position: absolute; bottom: 15px; right: 15px; background: white; padding: 10px; border-radius: 8px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); font-size: 11px; font-weight: bold; }
         .legenda-item { display: flex; align-items: center; margin-bottom: 5px; cursor: pointer; }
         .legenda-item input { margin-right: 6px; }
         .legenda-cor { width: 14px; height: 14px; margin-right: 6px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.2); }
         .rotulo-talhao { background: transparent !important; border: none !important; box-shadow: none !important; color: #000 !important; font-weight: bold !important; font-size: 14px !important; text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff !important; }
         
-        /* Nav */
         .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: white; display: flex; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 1000; }
         .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #777; cursor: pointer; }
         .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); background: #f9f9f9; }
@@ -84,19 +86,23 @@
         <div class="header">
             <div class="filtro-grupo">
                 <label>Ano</label>
-                <select id="f-ano" onchange="atualizarFiltrosCascata('ano')"><option value="TODOS">Todos</option></select>
+                <select id="f-ano" onchange="atualizarFiltrosCascata('ano')" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;"><option value="TODOS">Todos</option></select>
             </div>
             <div class="filtro-grupo">
                 <label>Mês</label>
-                <select id="f-mes" onchange="atualizarFiltrosCascata('mes')"><option value="TODOS">Todos</option></select>
+                <select id="f-mes" onchange="atualizarFiltrosCascata('mes')" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;"><option value="TODOS">Todos</option></select>
             </div>
             <div class="filtro-grupo">
                 <label>Data</label>
-                <select id="f-data" onchange="atualizarFiltrosCascata('data')"><option value="TODOS">Todas</option></select>
+                <select id="f-data" onchange="atualizarFiltrosCascata('data')" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;"><option value="TODOS">Todas</option></select>
             </div>
+            
             <div class="filtro-grupo" style="flex: 100%; margin-top: 5px;">
                 <label>Seleção de Área</label>
-                <select id="f-area" onchange="renderizarPainel()"><option value="TUDO">VER TUDO (Consolidado)</option></select>
+                <div class="select-container">
+                    <select id="f-area" onchange="renderizarPainel()"><option value="TUDO">VER TUDO (Consolidado)</option></select>
+                    <a id="btn-pdf" class="btn-pdf" target="_blank" title="Baixar Auditoria PDF">📄 PDF</a>
+                </div>
             </div>
         </div>
 
@@ -170,7 +176,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Sistema de Login Implacável
         function tentarLogin() {
             const u = document.getElementById('ipt-user').value.toLowerCase();
             const p = document.getElementById('ipt-pass').value;
@@ -188,20 +193,13 @@
             if (e.key === 'Enter') tentarLogin();
         });
 
-        // Configuração Geral
         let map;
         let dadosCSV = [];
         let geojsonFeatures = [];
         let graficos = {};
 
-        const mapaCores = {
-            "APLICADO": "#006400", "SOBREPOSIÇÃO": "#00008B", "NÃO APLICADO DENTRO DO TALHÃO": "#FFFF00", "APLICADO FORA DO TALHÃO": "#FF0000"
-        };
-
-        let gruposCamadas = {
-            "APLICADO": L.layerGroup(), "SOBREPOSIÇÃO": L.layerGroup(),
-            "APLICADO FORA DO TALHÃO": L.layerGroup(), "NÃO APLICADO DENTRO DO TALHÃO": L.layerGroup(), "TALHAO": L.layerGroup()
-        };
+        const mapaCores = { "APLICADO": "#006400", "SOBREPOSIÇÃO": "#00008B", "NÃO APLICADO DENTRO DO TALHÃO": "#FFFF00", "APLICADO FORA DO TALHÃO": "#FF0000" };
+        let gruposCamadas = { "APLICADO": L.layerGroup(), "SOBREPOSIÇÃO": L.layerGroup(), "APLICADO FORA DO TALHÃO": L.layerGroup(), "NÃO APLICADO DENTRO DO TALHÃO": L.layerGroup(), "TALHAO": L.layerGroup() };
 
         const centerTextPlugin = {
             id: 'centerText',
@@ -281,6 +279,14 @@
             if(origem === 'init' || origem === 'ano' || origem === 'mes') { let datas = [...new Set(ds.map(d => d.DATA_INICIO))].filter(Boolean).sort(); popSelect('f-data', datas, 'Todas'); }
             fa = getFiltrosAtuais(); if(fa.data !== 'TODOS') ds = ds.filter(d => d.DATA_INICIO === fa.data);
 
+            // A MÁGICA DA ORDEM NUMÉRICA
+            ds.sort((a, b) => {
+                let codA = parseInt(a.FAZENDA_COD) || 0;
+                let codB = parseInt(b.FAZENDA_COD) || 0;
+                if (codA === codB) return a.DATA_INICIO.localeCompare(b.DATA_INICIO); // Desempate por data
+                return codA - codB;
+            });
+
             let comboArea = document.getElementById('f-area');
             comboArea.innerHTML = '<option value="TUDO">VER TUDO (Consolidado)</option>';
             ds.forEach(r => comboArea.add(new Option(`${r.FAZENDA_COD} - ${r.FAZENDA_NOME} (${r.DATA_INICIO})`, r._id)));
@@ -296,6 +302,16 @@
 
         function renderizarPainel() {
             let idAlvo = document.getElementById('f-area').value, fa = getFiltrosAtuais();
+            
+            // Controle de visibilidade do botão PDF
+            let btnPdf = document.getElementById('btn-pdf');
+            if (idAlvo !== 'TUDO') {
+                btnPdf.href = `./dados/${idAlvo}.pdf`;
+                btnPdf.style.display = 'flex'; // Mostra o botão lindamente alinhado
+            } else {
+                btnPdf.style.display = 'none'; // Esconde quando está na visão global
+            }
+
             let dadosFiltrados = dadosCSV.filter(d => {
                 return (fa.ano === 'TODOS' || d._ano === fa.ano) && (fa.mes === 'TODOS' || d._mes === fa.mes) && (fa.data === 'TODOS' || d.DATA_INICIO === fa.data) && (idAlvo === 'TUDO' || d._id === idAlvo);
             });
@@ -320,7 +336,6 @@
             graficos.falha.data.datasets[0].data = [pctF, 100 - pctF > 0 ? 100 - pctF : 0]; graficos.falha.update();
             graficos.excedente.data.datasets[0].data = [pctE, 100 - pctE > 0 ? 100 - pctE : 0]; graficos.excedente.update();
 
-            // PREENCHENDO A NOVA TABELA GIGANTE
             let htmlTab = '', ultimaDataProc = '--';
             dadosFiltrados.forEach(r => {
                 let areaTalhao = parseFloat(r.AREA_REF_TOTAL_HA) || 0;
@@ -334,7 +349,6 @@
                     <td>${aplicadoMaisSobreposto.toFixed(2)}</td>
                     <td>${r.DATA_PROCESSAMENTO || '--'}</td>
                 </tr>`;
-                
                 if(r.DATA_PROCESSAMENTO) ultimaDataProc = r.DATA_PROCESSAMENTO;
             });
             document.getElementById('tabela-corpo').innerHTML = htmlTab;
