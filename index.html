@@ -40,21 +40,26 @@
         
         /* Layout Indicadores */
         .indicadores-container { padding: 15px; }
-        .bi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        
+        /* CARD SUPERIOR DUPLO: ÁREA DE REFERÊNCIA E DATA DE ATUALIZAÇÃO */
+        .top-info-bar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid #333; flex-wrap: wrap; gap: 10px; }
+        .info-item { display: flex; align-items: center; font-size: 12px; color: #444; }
+        .info-item .icon { font-size: 18px; margin-right: 8px; }
+        .info-item .label { font-weight: bold; color: #666; margin-right: 6px; text-transform: uppercase; }
+        .info-item b { font-size: 16px; color: #111; }
+
+        .bi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
         @media (min-width: 600px) { .bi-grid { grid-template-columns: repeat(4, 1fr); } }
         .bi-item { background: white; padding: 15px 5px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
         .bi-titulo { font-size: 12px; font-weight: bold; color: #555; text-transform: uppercase; text-align: center; min-height: 28px; line-height: 1.2; margin-bottom: 10px; }
         .chart-container { position: relative; height: 120px; width: 120px; margin: 0 auto; }
         .bi-valor { font-size: 15px; font-weight: bold; color: #222; margin-top: 12px; background: #f4f4f4; padding: 4px 10px; border-radius: 4px; }
-        .bi-resumo { background: white; padding: 12px; text-align: center; border-radius: 8px; font-size: 14px; color: #444; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #333; }
         
-        /* Tabela Turbo */
+        /* Tabela Enxuta e Elegante */
         .tabela-container { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
-        th { background: #f0f0f0; padding: 10px; text-align: left; color: #444; border-bottom: 2px solid #ddd; }
+        th { background: #f0f0f0; padding: 10px; text-align: left; color: #444; border-bottom: 2px solid #ddd; text-transform: uppercase; }
         td { padding: 10px; border-top: 1px solid #eee; color: #555; }
-        
-        .footer-texto { font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #666; text-align: center; padding: 10px; margin-bottom: 20px; }
         
         /* Legenda */
         .legenda-mapa { position: absolute; bottom: 15px; right: 15px; background: white; padding: 10px; border-radius: 8px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); font-size: 11px; font-weight: bold; }
@@ -86,15 +91,15 @@
         <div class="header">
             <div class="filtro-grupo">
                 <label>Ano</label>
-                <select id="f-ano" onchange="atualizarFiltrosCascata('ano')" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;"><option value="TODOS">Todos</option></select>
+                <select id="f-ano" onchange="atualizarFiltrosCascata('ano')"><option value="TODOS">Todos</option></select>
             </div>
             <div class="filtro-grupo">
                 <label>Mês</label>
-                <select id="f-mes" onchange="atualizarFiltrosCascata('mes')" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;"><option value="TODOS">Todos</option></select>
+                <select id="f-mes" onchange="atualizarFiltrosCascata('mes')"><option value="TODOS">Todos</option></select>
             </div>
             <div class="filtro-grupo">
                 <label>Data</label>
-                <select id="f-data" onchange="atualizarFiltrosCascata('data')" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;"><option value="TODOS">Todas</option></select>
+                <select id="f-data" onchange="atualizarFiltrosCascata('data')"><option value="TODOS">Todas</option></select>
             </div>
             
             <div class="filtro-grupo" style="flex: 100%; margin-top: 5px;">
@@ -119,6 +124,20 @@
 
         <div id="view-indicators" class="view">
             <div class="indicadores-container">
+                
+                <div class="top-info-bar">
+                    <div class="info-item">
+                        <span class="icon">🗺️</span>
+                        <span class="label">TALHÃO + CARREADOR INTERNO (ha):</span>
+                        <b id="val-total">0.00</b>
+                    </div>
+                    <div class="info-item">
+                        <span class="icon">⏱️</span>
+                        <span class="label">Atualizado em:</span>
+                        <b id="val-data-proc">--</b>
+                    </div>
+                </div>
+
                 <div class="bi-grid">
                     <div class="bi-item" style="border-bottom: 4px solid #006400;">
                         <div class="bi-titulo">Aplicado Interno</div>
@@ -142,27 +161,21 @@
                     </div>
                 </div>
 
-                <div class="bi-resumo">
-                    Área de Referência Total (Talhão): <b id="val-total" style="font-size: 16px;">0.00</b> ha
-                </div>
-
                 <div class="tabela-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>Cód. Fazenda</th>
                                 <th>Desc. Fazenda</th>
+                                <th>TALHÃO+CARREADOR(ha)</th>
                                 <th>Data Voo</th>
-                                <th>Área Talhão (ha)</th>
-                                <th>Aplic. + Sobreposição (ha)</th>
-                                <th>Processamento</th>
+                                <th>Data Processamento</th>
                             </tr>
                         </thead>
                         <tbody id="tabela-corpo"></tbody>
                     </table>
                 </div>
 
-                <div class="footer-texto" id="rodape-data">Ultima atualização em: --</div>
             </div>
         </div>
 
@@ -279,11 +292,10 @@
             if(origem === 'init' || origem === 'ano' || origem === 'mes') { let datas = [...new Set(ds.map(d => d.DATA_INICIO))].filter(Boolean).sort(); popSelect('f-data', datas, 'Todas'); }
             fa = getFiltrosAtuais(); if(fa.data !== 'TODOS') ds = ds.filter(d => d.DATA_INICIO === fa.data);
 
-            // A MÁGICA DA ORDEM NUMÉRICA
             ds.sort((a, b) => {
                 let codA = parseInt(a.FAZENDA_COD) || 0;
                 let codB = parseInt(b.FAZENDA_COD) || 0;
-                if (codA === codB) return a.DATA_INICIO.localeCompare(b.DATA_INICIO); // Desempate por data
+                if (codA === codB) return a.DATA_INICIO.localeCompare(b.DATA_INICIO); 
                 return codA - codB;
             });
 
@@ -303,13 +315,12 @@
         function renderizarPainel() {
             let idAlvo = document.getElementById('f-area').value, fa = getFiltrosAtuais();
             
-            // Controle de visibilidade do botão PDF
             let btnPdf = document.getElementById('btn-pdf');
             if (idAlvo !== 'TUDO') {
                 btnPdf.href = `./dados/${idAlvo}.pdf`;
-                btnPdf.style.display = 'flex'; // Mostra o botão lindamente alinhado
+                btnPdf.style.display = 'flex';
             } else {
-                btnPdf.style.display = 'none'; // Esconde quando está na visão global
+                btnPdf.style.display = 'none'; 
             }
 
             let dadosFiltrados = dadosCSV.filter(d => {
@@ -336,23 +347,25 @@
             graficos.falha.data.datasets[0].data = [pctF, 100 - pctF > 0 ? 100 - pctF : 0]; graficos.falha.update();
             graficos.excedente.data.datasets[0].data = [pctE, 100 - pctE > 0 ? 100 - pctE : 0]; graficos.excedente.update();
 
+            // PREENCHENDO A TABELA CORRIGIDA
             let htmlTab = '', ultimaDataProc = '--';
             dadosFiltrados.forEach(r => {
                 let areaTalhao = parseFloat(r.AREA_REF_TOTAL_HA) || 0;
-                let aplicadoMaisSobreposto = (parseFloat(r.AREA_APLICADA_INTERNA_HA) || 0) + (parseFloat(r.AREA_SOBREPOSTA_HA) || 0);
 
                 htmlTab += `<tr>
                     <td>${r.FAZENDA_COD}</td>
                     <td>${r.FAZENDA_NOME}</td>
-                    <td>${r.DATA_INICIO}</td>
                     <td>${areaTalhao.toFixed(2)}</td>
-                    <td>${aplicadoMaisSobreposto.toFixed(2)}</td>
+                    <td>${r.DATA_INICIO}</td>
                     <td>${r.DATA_PROCESSAMENTO || '--'}</td>
                 </tr>`;
+                
                 if(r.DATA_PROCESSAMENTO) ultimaDataProc = r.DATA_PROCESSAMENTO;
             });
             document.getElementById('tabela-corpo').innerHTML = htmlTab;
-            document.getElementById('rodape-data').innerText = "Ultima atualização em: " + ultimaDataProc;
+            
+            // ATUALIZA A DATA NO NOVO CARD SUPERIOR
+            document.getElementById('val-data-proc').innerText = ultimaDataProc;
 
             Object.values(gruposCamadas).forEach(g => g.clearLayers());
             let boundsGeral = L.featureGroup();
