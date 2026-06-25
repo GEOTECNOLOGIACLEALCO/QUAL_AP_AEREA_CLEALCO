@@ -192,7 +192,20 @@
         function tentarLogin() {
             const u = document.getElementById('ipt-user').value.toLowerCase();
             const p = document.getElementById('ipt-pass').value;
-            const credenciais = { 'juliana': 'juliana''tiago': 'tiago''cesar': 'cesar''paula': 'paula''leonardo': 'leonardo''douglas': 'douglas''tarcisio': 'tarcisio''pamela': 'pamela''controleagricola': 'controleagricola''geotecnologia': 'geotecnologia' };
+            
+            // A sua lista de usuários com credenciais indestrutíveis
+            const credenciais = {
+                'juliana': 'juliana',
+                'tiago': 'tiago',
+                'cesar': 'cesar',
+                'paula': 'paula',
+                'leonardo': 'leonardo',
+                'douglas': 'douglas',
+                'tarcisio': 'tarcisio',
+                'pamela': 'pamela',
+                'controleagricola': 'controleagricola',
+                'geotecnologia': 'geotecnologia'
+            };
 
             if (credenciais[u] && credenciais[u] === p) {
                 document.getElementById('login-overlay').style.display = 'none';
@@ -202,6 +215,7 @@
                 document.getElementById('erro-login').style.display = 'block';
             }
         }
+        
         document.getElementById('ipt-pass').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') tentarLogin();
         });
@@ -355,7 +369,6 @@
             graficos.falha.data.datasets[0].data = [pctF, 100 - pctF > 0 ? 100 - pctF : 0]; graficos.falha.update();
             graficos.excedente.data.datasets[0].data = [pctE, 100 - pctE > 0 ? 100 - pctE : 0]; graficos.excedente.update();
 
-            // PREENCHENDO A TABELA CORRIGIDA E CALCULANDO A DATA MAIS RECENTE
             let htmlTab = '', ultimaDataProc = '--', maxProcTime = 0;
             
             dadosFiltrados.forEach(r => {
@@ -369,7 +382,6 @@
                     <td>${r.DATA_PROCESSAMENTO || '--'}</td>
                 </tr>`;
                 
-                // Pega estritamente a data mais recente baseada no valor temporal numérico
                 if(r.DATA_PROCESSAMENTO) {
                     let t = parseDataBR(r.DATA_PROCESSAMENTO);
                     if(t > maxProcTime) {
@@ -380,7 +392,6 @@
             });
             document.getElementById('tabela-corpo').innerHTML = htmlTab;
             
-            // ATUALIZA A DATA NO NOVO CARD SUPERIOR
             document.getElementById('val-data-proc').innerText = ultimaDataProc;
 
             Object.values(gruposCamadas).forEach(g => g.clearLayers());
