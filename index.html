@@ -192,7 +192,7 @@
         function tentarLogin() {
             const u = document.getElementById('ipt-user').value.toLowerCase();
             const p = document.getElementById('ipt-pass').value;
-            const credenciais = { 'admin': 'admin', 'gerente': '123456', 'visitante': '1234', 'usina': 'senha123' };
+            const credenciais = { 'juliana': 'juliana''tiago': 'tiago''cesar': 'cesar''paula': 'paula''leonardo': 'leonardo''douglas': 'douglas''tarcisio': 'tarcisio''pamela': 'pamela''controleagricola': 'controleagricola''geotecnologia': 'geotecnologia' };
 
             if (credenciais[u] && credenciais[u] === p) {
                 document.getElementById('login-overlay').style.display = 'none';
@@ -205,6 +205,14 @@
         document.getElementById('ipt-pass').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') tentarLogin();
         });
+
+        // Parseador implacável de datas (Converte string de data BR para Timestamp)
+        function parseDataBR(s) {
+            if(!s) return 0;
+            let p = s.split(/[\s/:-]+/);
+            if(p.length >= 3) return new Date(p[2], p[1]-1, p[0], p[3]||0, p[4]||0).getTime();
+            return 0;
+        }
 
         let map;
         let dadosCSV = [];
@@ -347,8 +355,9 @@
             graficos.falha.data.datasets[0].data = [pctF, 100 - pctF > 0 ? 100 - pctF : 0]; graficos.falha.update();
             graficos.excedente.data.datasets[0].data = [pctE, 100 - pctE > 0 ? 100 - pctE : 0]; graficos.excedente.update();
 
-            // PREENCHENDO A TABELA CORRIGIDA
-            let htmlTab = '', ultimaDataProc = '--';
+            // PREENCHENDO A TABELA CORRIGIDA E CALCULANDO A DATA MAIS RECENTE
+            let htmlTab = '', ultimaDataProc = '--', maxProcTime = 0;
+            
             dadosFiltrados.forEach(r => {
                 let areaTalhao = parseFloat(r.AREA_REF_TOTAL_HA) || 0;
 
@@ -360,7 +369,14 @@
                     <td>${r.DATA_PROCESSAMENTO || '--'}</td>
                 </tr>`;
                 
-                if(r.DATA_PROCESSAMENTO) ultimaDataProc = r.DATA_PROCESSAMENTO;
+                // Pega estritamente a data mais recente baseada no valor temporal numérico
+                if(r.DATA_PROCESSAMENTO) {
+                    let t = parseDataBR(r.DATA_PROCESSAMENTO);
+                    if(t > maxProcTime) {
+                        maxProcTime = t;
+                        ultimaDataProc = r.DATA_PROCESSAMENTO;
+                    }
+                }
             });
             document.getElementById('tabela-corpo').innerHTML = htmlTab;
             
