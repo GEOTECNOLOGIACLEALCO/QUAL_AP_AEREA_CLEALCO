@@ -49,14 +49,16 @@
         .btn-voltar { background: #555; height: 30px; align-self: flex-end; margin-bottom: 1px; }
         .btn-voltar:hover { background: #333; }
 
-        /* Views (Ajustado topo para 145px para não engolir o layout) */
+        /* Views (Topo ajustado para 145px para não quebrar no celular) */
         .view { position: absolute; top: 145px; bottom: 60px; left: 0; right: 0; overflow-y: auto; display: none; }
         .view.active { display: block; }
         #mapa { height: 100%; width: 100%; }
         
-        /* Barra de Informações Vitais */
+        /* Barra de Informações Vitais e Médias */
         .indicadores-container { padding: 15px; }
-        .top-info-bar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid #333; flex-wrap: wrap; gap: 10px; }
+        .top-info-bar { display: flex; flex-direction: column; background: white; padding: 12px 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid #333; gap: 10px; }
+        .info-linha-pri { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .info-linha-sec { display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 2px; }
         .info-item { display: flex; align-items: center; font-size: 12px; color: #444; }
         .info-item .icon { font-size: 18px; margin-right: 8px; }
         .info-item .label { font-weight: bold; color: #666; margin-right: 6px; text-transform: uppercase; }
@@ -76,8 +78,8 @@
         th { background: #f0f0f0; padding: 10px; text-align: left; color: #444; border-bottom: 2px solid #ddd; text-transform: uppercase; }
         td { padding: 10px; border-top: 1px solid #eee; color: #555; }
         
-        /* Legenda Flutuante (Agora Dinâmica) */
-        .legenda-mapa { position: absolute; bottom: 15px; right: 15px; background: white; padding: 10px; border-radius: 8px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); font-size: 11px; font-weight: bold; max-height: 200px; overflow-y: auto; }
+        /* Legenda Flutuante Dinâmica */
+        .legenda-mapa { position: absolute; bottom: 15px; right: 15px; background: white; padding: 10px; border-radius: 8px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); font-size: 11px; font-weight: bold; max-height: 220px; overflow-y: auto; }
         .legenda-titulo { font-size: 10px; color: #777; text-transform: uppercase; border-bottom: 1px solid #eee; margin-bottom: 6px; padding-bottom: 4px; }
         .legenda-item { display: flex; align-items: center; margin-bottom: 5px; cursor: pointer; }
         .legenda-item input { margin-right: 6px; }
@@ -136,12 +138,12 @@
                 <select id="f-data" onchange="atualizarFiltrosCascata('data')"><option value="TODOS">Todas</option></select>
             </div>
             
-            <div class="filtro-grupo" id="box-tema-terrestre" style="display: none; min-width: 110px;">
+            <div class="filtro-grupo" id="box-tema-terrestre" style="display: none; min-width: 130px;">
                 <label style="color: var(--trator);">🚜 Tema do Mapa</label>
                 <select id="f-tema-mapa" onchange="renderizarPainel()" style="border-color: var(--trator);">
                     <option value="CLASSE">🎯 Qualidade (Acerto/Falha)</option>
                     <option value="VELOCIDADE">🏎️ Velocidade (km/h)</option>
-                    <option value="TAXA">💧 Taxa de Aplicação</option>
+                    <option value="TAXA_1">💧 Taxa de Aplicação (TAXA_1)</option>
                 </select>
             </div>
 
@@ -163,15 +165,29 @@
             <div class="indicadores-container">
                 
                 <div class="top-info-bar">
-                    <div class="info-item">
-                        <span class="icon" id="icone-modulo">🗺️</span>
-                        <span class="label">TALHÃO + CARREADOR INTERNO (ha):</span>
-                        <b id="val-total">0.00</b>
+                    <div class="info-linha-pri">
+                        <div class="info-item">
+                            <span class="icon" id="icone-modulo">🗺️</span>
+                            <span class="label">TALHÃO + CARREADOR INTERNO (ha):</span>
+                            <b id="val-total">0.00</b>
+                        </div>
+                        <div class="info-item">
+                            <span class="icon">⏱️</span>
+                            <span class="label">Atualizado em:</span>
+                            <b id="val-data-proc">--</b>
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <span class="icon">⏱️</span>
-                        <span class="label">Atualizado em:</span>
-                        <b id="val-data-proc">--</b>
+                    <div class="info-linha-sec">
+                        <div class="info-item">
+                            <span class="icon">🏎️</span>
+                            <span class="label">VELOCIDADE MÉDIA:</span>
+                            <b id="val-vel-med" style="color: #0288d1;">--</b> <span style="font-size: 11px; color: #777; margin-left: 2px;">km/h</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="icon">💧</span>
+                            <span class="label">TAXA MÉDIA:</span>
+                            <b id="val-taxa-med" style="color: #d32f2f;">--</b> <span style="font-size: 11px; color: #777; margin-left: 2px;">L/ha</span>
+                        </div>
                     </div>
                 </div>
 
@@ -238,14 +254,14 @@
 
             if (credenciais[u] && credenciais[u] === p) {
                 document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('hub-overlay').style.display = 'flex'; // Abre o Hub!
+                document.getElementById('hub-overlay').style.display = 'flex';
             } else {
                 document.getElementById('erro-login').style.display = 'block';
             }
         }
         document.getElementById('ipt-pass').addEventListener('keypress', e => { if (e.key === 'Enter') tentarLogin(); });
 
-        // 2. CONTROLE DE MÓDULOS E ESTADO
+        // 2. CONTROLE DE MÓDULOS E ESTADO GERAL
         let moduloAtual = 'aerea';
         let pastaDadosAtual = './dados_aerea';
         let map;
@@ -253,24 +269,24 @@
         let geojsonFeatures = [];
         let graficos = {};
         let gruposCamadas = {};
-        let paletaDinamica = {}; // Armazena cores geradas para temas de velocidade/taxa
+        let paletaDinamica = {};
 
         const coresPadrãoQualidade = { "APLICADO": "#006400", "SOBREPOSIÇÃO": "#00008B", "NÃO APLICADO DENTRO DO TALHÃO": "#FFFF00", "APLICADO FORA DO TALHÃO": "#FF0000" };
-        const listaCoresGenéricas = ["#2ecc71", "#3498db", "#e74c3c", "#f39c12", "#9b59b6", "#1abc9c", "#34495e", "#d35400"];
+        
+        // Paletas em degradê para velocidade e taxa (Do Vermelho Baixo ao Azul Alto)
+        const degradêVermelhoAzul = ['#d32f2f', '#e64a19', '#f57c00', '#fbc02d', '#4caf50', '#0288d1', '#1976d2', '#0d47a1'];
 
         function selecionarModulo(modulo) {
             moduloAtual = modulo;
             pastaDadosAtual = modulo === 'aerea' ? './dados_aerea' : './dados_terrestre';
             
-            // Personaliza a interface para o módulo escolhido
             document.getElementById('icone-modulo').innerText = modulo === 'aerea' ? '🛩️' : '🚜';
             document.getElementById('box-tema-terrestre').style.display = modulo === 'terrestre' ? 'flex' : 'none';
-            document.getElementById('f-tema-mapa').value = 'CLASSE'; // Reseta para qualidade
+            document.getElementById('f-tema-mapa').value = 'CLASSE';
             
             document.getElementById('hub-overlay').style.display = 'none';
             document.getElementById('app-content').style.display = 'block';
             
-            // Zera dados anteriores
             dadosCSV = [];
             geojsonFeatures = [];
             
@@ -349,7 +365,16 @@
                                 c.data.forEach(item => {
                                     if(item.FAZENDA_COD) {
                                         item._id = id;
-                                        if(item.DATA_INICIO) { let p = item.DATA_INICIO.split('-'); if(p.length === 3) { item._ano = p[2]; item._mes = p[1]; item._dia = p[0]; } }
+                                        // NORMALIZADOR CRONOLÓGICO: Garante que os filtros de Ano e Mês funcionem no Trator!
+                                        let dataRaw = item.DATA_INICIO || item.DATA_VOO || item.DATA_OP || item.DATA || '';
+                                        if(dataRaw) {
+                                            let p = dataRaw.split(/[\s/:-]+/);
+                                            if(p.length >= 3) {
+                                                if(p[0].length === 4) { item._ano = p[0]; item._mes = p[1]; item._dia = p[2]; }
+                                                else { item._ano = p[2]; item._mes = p[1]; item._dia = p[0]; }
+                                                item.DATA_INICIO = `${item._dia}/${item._mes}/${item._ano}`;
+                                            }
+                                        }
                                         dadosCSV.push(item);
                                     }
                                 }); res();
@@ -391,9 +416,27 @@
             if(array.includes(valAtual)) sel.value = valAtual;
         }
 
-        // MOTOR TEMÁTICO DINÂMICO (Descobre os temas e monta legenda sozinho)
+        // CLASSIFICADOR DE TAXA DE APLICAÇÃO (0-1000, 1000-1500, 1500-2000, 2000-2500, >2500)
+        function getBucketTaxa(val) {
+            let n = parseFloat(val);
+            if(isNaN(n)) {
+                let str = String(val).trim();
+                if(str.includes("1000") && !str.includes("1500")) return { chave: "0 - 1000", cor: "#d32f2f" };
+                if(str.includes("1000") && str.includes("1500")) return { chave: "1000 - 1500", cor: "#f57c00" };
+                if(str.includes("1500") && str.includes("2000")) return { chave: "1500 - 2000", cor: "#fbc02d" };
+                if(str.includes("2000") && str.includes("2500")) return { chave: "2000 - 2500", cor: "#0288d1" };
+                if(str.toLowerCase().includes("acima") || str.includes("2500") || str.includes(">")) return { chave: "Acima de 2500", cor: "#0d47a1" };
+                return { chave: str || "Outros", cor: "#7f8c8d" };
+            }
+            if(n <= 1000) return { chave: "0 - 1000", cor: "#d32f2f" };
+            if(n <= 1500) return { chave: "1000 - 1500", cor: "#f57c00" };
+            if(n <= 2000) return { chave: "1500 - 2000", cor: "#fbc02d" };
+            if(n <= 2500) return { chave: "2000 - 2500", cor: "#0288d1" };
+            return { chave: "Acima de 2500", cor: "#0d47a1" };
+        }
+
+        // MOTOR TEMÁTICO DINÂMICO (Monta legenda e paletas no mapa)
         function construirLegendaETemas(featuresFiltradas, atributoAlvo) {
-            // Limpa camadas anteriores do mapa
             Object.values(gruposCamadas).forEach(g => { if(map.hasLayer(g)) map.removeLayer(g); });
             gruposCamadas = { "TALHAO": L.layerGroup().addTo(map) };
             paletaDinamica = {};
@@ -402,14 +445,25 @@
             let htmlLegenda = `<div class="legenda-titulo">Camadas (${atributoAlvo})</div>`;
 
             if (atributoAlvo === 'CLASSE') {
-                // Modo Qualidade Padrão
                 Object.keys(coresPadrãoQualidade).forEach(cls => {
                     gruposCamadas[cls] = L.layerGroup().addTo(map);
                     paletaDinamica[cls] = coresPadrãoQualidade[cls];
                     htmlLegenda += `<div class="legenda-item"><input type="checkbox" id="chk-${cls}" checked onchange="toggleCamada('${cls}')"><span class="legenda-cor" style="background:${coresPadrãoQualidade[cls]};"></span> ${cls.substring(0, 14)}</div>`;
                 });
+            } else if (atributoAlvo === 'TAXA_1') {
+                // Buckets Fixos da Taxa (Do Vermelho ao Azul)
+                let bucketsFixos = [
+                    { c: "0 - 1000", cor: "#d32f2f" }, { c: "1000 - 1500", cor: "#f57c00" },
+                    { c: "1500 - 2000", cor: "#fbc02d" }, { c: "2000 - 2500", cor: "#0288d1" },
+                    { c: "Acima de 2500", cor: "#0d47a1" }
+                ];
+                bucketsFixos.forEach(b => {
+                    gruposCamadas[b.c] = L.layerGroup().addTo(map);
+                    paletaDinamica[b.c] = b.cor;
+                    htmlLegenda += `<div class="legenda-item"><input type="checkbox" id="chk-${b.c}" checked onchange="toggleCamada('${b.c}')"><span class="legenda-cor" style="background:${b.cor};"></span> ${b.c}</div>`;
+                });
             } else {
-                // Modo Dinâmico (Velocidade ou Taxa de Aplicação no Trator)
+                // Velocidade (Ordenado do mais lento=vermelho para o mais rápido=azul)
                 let valoresUnicos = new Set();
                 featuresFiltradas.forEach(p => {
                     p.dados.features.forEach(f => {
@@ -419,17 +473,20 @@
                     });
                 });
 
-                let idxCor = 0;
-                Array.from(valoresUnicos).sort().forEach(val => {
+                let valoresVel = Array.from(valoresUnicos).sort((a,b) => {
+                    let na = parseFloat(a), nb = parseFloat(b);
+                    return (!isNaN(na) && !isNaN(nb)) ? na - nb : String(a).localeCompare(String(b));
+                });
+
+                valoresVel.forEach((val, idx) => {
+                    let corIdx = Math.floor((idx / Math.max(1, valoresVel.length - 1)) * (degradêVermelhoAzul.length - 1));
+                    let cor = degradêVermelhoAzul[corIdx] || '#333';
                     gruposCamadas[val] = L.layerGroup().addTo(map);
-                    let cor = listaCoresGenéricas[idxCor % listaCoresGenéricas.length];
                     paletaDinamica[val] = cor;
                     htmlLegenda += `<div class="legenda-item"><input type="checkbox" id="chk-${val}" checked onchange="toggleCamada('${val}')"><span class="legenda-cor" style="background:${cor};"></span> ${val}</div>`;
-                    idxCor++;
                 });
             }
 
-            // Adiciona o Talhão por último na legenda
             htmlLegenda += `<div class="legenda-item" style="border-top:1px solid #ccc; padding-top:4px;"><input type="checkbox" id="chk-TALHAO" checked onchange="toggleCamada('TALHAO')"><span class="legenda-cor" style="background:transparent; border:1px dashed #000;"></span> LIMITES TALHÃO</div>`;
             containerLegenda.innerHTML = htmlLegenda;
         }
@@ -450,11 +507,19 @@
                 return (fa.ano === 'TODOS' || d._ano === fa.ano) && (fa.mes === 'TODOS' || d._mes === fa.mes) && (fa.data === 'TODOS' || d.DATA_INICIO === fa.data) && (idAlvo === 'TUDO' || d._id === idAlvo);
             });
 
-            // 1. Atualização dos Cálculos e Rosquinhas BI (Idênticos para ambos)
+            // 1. Cálculos de Área e BI
             let sums = { a:0, s:0, f:0, e:0, t:0 };
+            let somaVel = 0, countVel = 0, somaTaxa = 0, countTaxa = 0;
+
             dadosFiltrados.forEach(r => {
                 sums.a += parseFloat(r.AREA_APLICADA_INTERNA_HA)||0; sums.s += parseFloat(r.AREA_SOBREPOSTA_HA)||0;
                 sums.f += parseFloat(r.AREA_NAO_APLICADA_HA)||0; sums.e += parseFloat(r.AREA_FORA_TALHAO_HA)||0; sums.t += parseFloat(r.AREA_REF_TOTAL_HA)||0;
+                
+                // CÁLCULO DAS MÉDIAS DE TELEMETRIA
+                let v = parseFloat(r.VELOCIDADE_MEDIA || r.VELOCIDADE || r.VEL_MEDIA);
+                if(!isNaN(v) && v > 0) { somaVel += v; countVel++; }
+                let tx = parseFloat(r.TAXA_MEDIA || r.TAXA_1 || r.TAXA || r.VOLUME_HA || r.SPRAYED_LOG_HA);
+                if(!isNaN(tx) && tx > 0) { somaTaxa += tx; countTaxa++; }
             });
 
             document.getElementById('val-acerto').innerText = sums.a.toFixed(2);
@@ -462,6 +527,10 @@
             document.getElementById('val-falha').innerText = sums.f.toFixed(2);
             document.getElementById('val-excedente').innerText = sums.e.toFixed(2);
             document.getElementById('val-total').innerText = sums.t.toFixed(2);
+
+            // Atualiza Médias no Topo
+            document.getElementById('val-vel-med').innerText = countVel > 0 ? (somaVel / countVel).toFixed(1) : '--';
+            document.getElementById('val-taxa-med').innerText = countTaxa > 0 ? (somaTaxa / countTaxa).toFixed(1) : '--';
 
             let areaReferenciaTotal = sums.t > 0 ? sums.t : 1; 
             let pctA = (sums.a / areaReferenciaTotal) * 100, pctS = (sums.s / areaReferenciaTotal) * 100, pctF = (sums.f / areaReferenciaTotal) * 100, pctE = (sums.e / areaReferenciaTotal) * 100; 
@@ -487,7 +556,7 @@
             document.getElementById('tabela-corpo').innerHTML = htmlTab;
             document.getElementById('val-data-proc').innerText = ultimaDataProc;
 
-            // 3. Renderização do Mapa com o Tema Selecionado
+            // 3. Renderização do Mapa e Temas
             let idsParaPlotar = idAlvo === 'TUDO' ? dadosFiltrados.map(d => d._id) : [idAlvo];
             let pacotesGeoSelecionados = geojsonFeatures.filter(g => idsParaPlotar.includes(g.id));
             
@@ -499,16 +568,23 @@
                     style: f => {
                         if (f.properties.TIPO_GEO === "TALHAO") return { color: "#000", weight: 2, fillOpacity: 0 };
                         
-                        let chave = temaMapa === 'CLASSE' ? f.properties.CLASSE : String(f.properties[temaMapa]).trim();
-                        let cor = paletaDinamica[chave] || "#999"; 
-                        return { color: cor, weight: 1, fillColor: cor, fillOpacity: 1.0 }; 
+                        let cor = "#999";
+                        if (temaMapa === 'CLASSE') cor = paletaDinamica[f.properties.CLASSE];
+                        else if (temaMapa === 'TAXA_1') cor = getBucketTaxa(f.properties.TAXA_1).cor;
+                        else cor = paletaDinamica[String(f.properties[temaMapa]).trim()];
+                        
+                        return { color: cor || "#999", weight: 1, fillColor: cor || "#999", fillOpacity: 1.0 }; 
                     },
                     onEachFeature: (f, layer) => {
                         if (f.properties.TIPO_GEO === "TALHAO") {
                             if (f.properties.TALHAO) layer.bindTooltip(String(parseInt(f.properties.TALHAO)), { permanent: true, direction: 'center', className: 'rotulo-talhao' });
                             layer.addTo(gruposCamadas["TALHAO"]);
                         } else {
-                            let chave = temaMapa === 'CLASSE' ? f.properties.CLASSE : String(f.properties[temaMapa]).trim();
+                            let chave;
+                            if (temaMapa === 'CLASSE') chave = f.properties.CLASSE;
+                            else if (temaMapa === 'TAXA_1') chave = getBucketTaxa(f.properties.TAXA_1).chave;
+                            else chave = String(f.properties[temaMapa]).trim();
+                            
                             if (gruposCamadas[chave]) layer.addTo(gruposCamadas[chave]);
                         }
                         layer.addTo(boundsGeral);
